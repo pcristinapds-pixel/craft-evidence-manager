@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    html, body { height: 100%; background: transparent; overflow: hidden; user-select: none; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 4px; }
+
+    .barra {
+      height: 100%; display: flex; align-items: center; gap: 6px; padding: 0 6px 0 14px;
+      background: #1F2D36; color: #fff; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      -webkit-app-region: drag;
+    }
+    .barra.gravando { border-color: #E30613; }
+
+    .contador { flex: 1 0 auto; min-width: 0; font-size: 13px; color: #C9D2D9; white-space: nowrap; }
+    .contador b { color: #fff; font-weight: 600; }
+    .contador .rec { color: #FF6B73; margin-left: 10px; font-variant-numeric: tabular-nums; }
+
+    button {
+      -webkit-app-region: no-drag;
+      height: 34px; padding: 0 12px; border-radius: 6px; border: 1px solid transparent;
+      font: 600 13px 'Segoe UI', system-ui, sans-serif; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px;
+      background: transparent; color: #fff;
+      transition: background-color .15s, border-color .15s;
+    }
+    button:hover { background: rgba(255,255,255,.08); }
+    button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+    svg { width: 15px; height: 15px; }
+
+    kbd {
+      font: 500 11px 'Cascadia Mono', Consolas, monospace; color: #C9D2D9;
+      padding: 2px 5px; border-radius: 4px; background: rgba(255,255,255,.1);
+    }
+
+    .ponto { width: 9px; height: 9px; border-radius: 50%; background: #E30613; }
+    #btnFlRecord.ativo { background: #E30613; }
+    #btnFlRecord.ativo .ponto { background: #fff; border-radius: 2px; animation: pisca 1s infinite; }
+    #btnFlRecord.ativo kbd { background: rgba(255,255,255,.2); color: #fff; }
+
+    #btnFlFinish { background: #fff; color: #1F2D36; }
+    #btnFlFinish:hover { background: #E9EDF0; }
+
+    .oculto { display: none !important; }
+    #btnFlPause.pausado { background: rgba(255,255,255,.14); }
+    .contador .pausa { color: #F5C26B; margin-left: 10px; }
+    .sep { width: 1px; height: 22px; background: rgba(255,255,255,.12); margin: 0 2px; }
+    .flash { animation: flash .35s; }
+    @keyframes flash { 0% { background: rgba(255,255,255,.35); } 100% { background: transparent; } }
+    @keyframes pisca { 50% { opacity: .3; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="barra" id="barra">
+    <div class="contador" id="stats"><b>0</b> prints</div>
+
+    <button id="btnFlPrint" title="Tirar print">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Print <kbd id="kPrint">F9</kbd>
+    </button>
+
+    <button id="btnFlRecord" title="Iniciar ou parar a gravação">
+      <span class="ponto"></span><span id="txtRecord">Gravar</span>
+    </button>
+
+    <button id="btnFlPause" class="oculto" title="Pausar ou retomar a gravação">
+      <svg viewBox="0 0 24 24" fill="currentColor" id="icoPause"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      <span id="txtPause">Pausar</span>
+    </button>
+
+    <span class="sep"></span>
+
+    <button id="btnFlFinish" title="Concluir e revisar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Concluir
+    </button>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const legivel = a => String(a || '').replace(/CommandOrControl/gi, 'Ctrl');
+    let ultimoTotal = 0;
+
+    // mostra o atalho configurado no botão de print
+    if (window.api.getSettings) {
+      window.api.getSettings().then(cfg => {
+        $('kPrint').textContent = legivel(cfg.shortcutPrint || 'F9');
+        $('btnFlRecord').title = `Iniciar ou parar a gravação (${legivel(cfg.shortcutRecord)})`;
+        $('btnFlFinish').title = `Concluir e revisar (${legivel(cfg.shortcutFinish)})`;
+        $('btnFlPause').title = `Pausar ou retomar a gravação (${legivel(cfg.shortcutPause || 'Ctrl+Shift+P')})`;
+      }).catch(() => {});
+    }
+
+    $('btnFlPrint').onclick = () => window.api.sendPrintCmd();
+    $('btnFlRecord').onclick = () => window.api.sendRecordCmd();
+    $('btnFlFinish').onclick = () => window.api.sendFinishCmd();
+    $('btnFlPause').onclick = () => window.api.sendPauseCmd();
+
+    const tempo = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+    window.api.onUpdateStats((stats) => {
+      const n = stats.printCount || 0;
+      $('stats').innerHTML = `<b>${n}</b> print${n === 1 ? '' : 's'}` +
+        (stats.isRecording ? (stats.isPaused
+          ? `<span class="pausa">pausado ${tempo(stats.recordTime || 0)}</span>`
+          : `<span class="rec">● ${tempo(stats.recordTime || 0)}</span>`) : '');
+      $('btnFlPause').classList.toggle('oculto', !stats.isRecording);
+      $('btnFlPause').classList.toggle('pausado', !!stats.isPaused);
+      $('txtPause').textContent = stats.isPaused ? 'Retomar' : 'Pausar';
+      $('icoPause').innerHTML = stats.isPaused ? '<path d="M7 5l12 7-12 7z"/>' : '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+      $('btnFlRecord').classList.toggle('ativo', !!stats.isRecording);
+      $('txtRecord').textContent = stats.isRecording ? 'Parar' : 'Gravar';
+      $('barra').classList.toggle('gravando', !!stats.isRecording);
+      if (n > ultimoTotal) {  // retorno visual a cada print
+        $('btnFlPrint').classList.remove('flash'); void $('btnFlPrint').offsetWidth; $('btnFlPrint').classList.add('flash');
+      }
+      ultimoTotal = n;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Dependências
+node_modules/
+
+# Build: versiona só o .exe final (via Git LFS); o resto é recriado a cada build
+dist/*
+!dist/*.exe
+!dist/*.docx
+!dist/*.html
+
+# PPTs gerados (evidências)
+*.pptx
+exemplo-saida/
+
+# Vídeos gravados / editados
+*.mp4
+*.webm
+*.mov
+*.mkv
+*.avi
+
+# Mantém o vídeo de exemplo usado pelo "npm run test:ppt"
+!assets/exemplo/video.mp4
+
+# Arquivos temporários e do sistema
+Claude outputs/
+*.log
+.DS_Store
+Thumbs.db

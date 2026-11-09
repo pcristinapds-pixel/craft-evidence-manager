@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Craft QA - Padronizador de Evidências</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo-area">
+      <div class="craft-logo">
+        <!-- Puxa a imagem real que você salvou na pasta assets -->
+        <img src="../../assets/logo.png" alt="Craft Logo" style="height: 38px; width: auto; object-fit: contain;">
+      </div>
+      <h2>Craft QA <span>Evidence Manager</span></h2>
+    </div>
+    <button id="btnSettings" class="btn-secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Configurações</button>
+  </div>
+
+  <div id="screenSetup" class="container">
+    <div class="card">
+      <h3>Informações do Caso de Teste</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>ID da História *</label>
+          <input type="text" id="storyId" placeholder="Ex: QMS-1036">
+        </div>
+        <div class="form-group">
+          <label>Caso de Teste *</label>
+          <input type="text" id="testCaseId" value="CT01">
+        </div>
+        <div class="form-group">
+          <label>Responsável *</label>
+          <input type="text" id="author" placeholder="Nome do QA">
+        </div>
+        <div class="form-group">
+          <label>Ambiente *</label>
+          <select id="environment">
+            <option value="QA">QA</option>
+            <option value="Desenvolvimento">Desenvolvimento</option>
+            <option value="Homologação">Homologação</option>
+            <option value="Produção">Produção</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Versão da Aplicação</label>
+          <input type="text" id="version" placeholder="Ex: v2.4.1">
+        </div>
+        <div class="form-group span-full">
+          <label>Título do Teste *</label>
+          <input type="text" id="testTitle" placeholder="Ex: Consulta de histórico do aéreo">
+        </div>
+        <div class="form-group span-full">
+          <label>Cenário de Teste (BDD) *</label>
+          <textarea id="bddText" rows="5" placeholder="Dado que...&#10;Quando...&#10;Então..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Selecione a Tela ou Janela para Captura</h3>
+      <div id="sourcesList" class="sources-grid"></div>
+    </div>
+
+    <div class="actions">
+      <button id="btnStartCapture" class="btn-primary">Iniciar captura</button>
+    </div>
+  </div>
+
+  <div id="screenReview" class="container hidden">
+    <div class="card">
+      <div class="review-header">
+        <h3>Revisão de Evidências Capturadas</h3>
+        <div class="form-group inline">
+          <label><strong>Status do Teste *:</strong></label>
+          <select id="finalStatus" class="status-select">
+            <option value="">-- Selecione --</option>
+            <option value="Passou" style="color: green; font-weight: bold;">PASSOU</option>
+            <option value="Falhou" style="color: red; font-weight: bold;">FALHOU</option>
+            <option value="Bloqueado" style="color: orange; font-weight: bold;">BLOQUEADO</option>
+            <option value="Não executado">NÃO EXECUTADO</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="review-layout">
+        <div class="thumbnail-sidebar">
+          <h4>Itens Capturados</h4>
+          <div id="thumbList" class="thumb-list"></div>
+          <button id="btnResumeCapture" class="btn-secondary" style="margin-top: 10px; width: 100%;">Capturar mais</button>
+        </div>
+
+        <div class="editor-area">
+          <div id="canvasToolbar" class="canvas-toolbar hidden">
+            <span>Clique e arraste sobre o print para destacar (Retângulo Vermelho)</span>
+            <button id="btnUndoHighlight" class="btn-small">Desfazer</button>
+            <button id="btnClearHighlights" class="btn-small danger">Limpar destaques</button>
+          </div>
+          <div id="mediaContainer" class="media-container">
+            <canvas id="annotationCanvas" class="hidden"></canvas>
+            <video id="videoPreview" controls class="hidden"></video>
+          </div>
+
+          <!-- Editor de vídeo: recortar início/fim, excluir trechos e dividir -->
+          <div id="videoEditor" class="video-editor hidden">
+            <div class="ve-topo">
+              <button id="vePlay" class="btn-small ve-play" title="Reproduzir com as edições (Espaço)">▶</button>
+              <span id="veTempo" class="ve-tempo">00:00.0 / 00:00.0</span>
+              <span id="veDica" class="ve-dica">Arraste as alças para recortar o início e o fim. Clique na linha do tempo para ir a um ponto.</span>
+            </div>
+            <div class="ve-linha" id="veLinha" aria-label="Linha do tempo do vídeo">
+              <div class="ve-faixa"></div>
+              <div class="ve-fora" id="veForaIni"></div>
+              <div class="ve-fora" id="veForaFim"></div>
+              <div id="veRemovidos"></div>
+              <div id="veMarcando" class="ve-removido provisorio hidden"></div>
+              <div id="veCortes"></div>
+              <div class="ve-alca" id="veAlcaIni" title="Início do vídeo"></div>
+              <div class="ve-alca" id="veAlcaFim" title="Fim do vídeo"></div>
+              <div class="ve-cabeca" id="veCabeca"></div>
+            </div>
+            <div class="ve-acoes">
+              <button id="veIni" class="btn-small">Começar aqui</button>
+              <button id="veFim" class="btn-small">Terminar aqui</button>
+              <button id="veTrecho" class="btn-small">Excluir trecho</button>
+              <button id="veDividir" class="btn-small">Dividir aqui</button>
+              <span class="ve-esp"></span>
+              <button id="veDesfazer" class="btn-small danger">Desfazer edição</button>
+              <button id="veAplicar" class="btn-primary btn-small">Aplicar edição</button>
+            </div>
+            <div id="veResumo" class="ve-resumo"></div>
+          </div>
+          <div id="videoSemEdicao" class="ve-resumo hidden">A edição de vídeo não está disponível. Rode "npm install" na pasta do projeto para instalar o FFmpeg.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btnDiscardAll" class="btn-danger">Descartar tudo</button>
+      <button id="btnGeneratePPT" class="btn-primary">Gerar PPT</button>
+    </div>
+  </div>
+
+  <div id="modalSettings" class="modal hidden">
+    <div class="modal-content">
+      <h3>Configurações do Sistema</h3>
+      <div class="form-group">
+        <label>Pasta de Destino dos PPTs</label>
+        <div class="folder-input">
+          <input type="text" id="cfgSavePath" readonly>
+          <button id="btnSelectFolder" class="btn-secondary">Alterar</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>URL Base das Histórias (JIRA/Azure)</label>
+        <input type="text" id="cfgJiraUrl" placeholder="https://suaempresa.atlassian.net/browse/">
+      </div>
+      <div class="form-group">
+        <label>Atalho do Print</label>
+        <input type="text" id="cfgShortcutPrint" value="F9">
+      </div>
+      <div class="form-group">
+        <label>Atalho de Gravação</label>
+        <input type="text" id="cfgShortcutRecord" value="CommandOrControl+Shift+R">
+      </div>
+      <div class="form-group">
+        <label>Atalho de Pausar / Retomar Gravação</label>
+        <input type="text" id="cfgShortcutPause" value="Ctrl+Shift+P">
+      </div>
+      <div class="form-group">
+        <label>Atalho de Finalizar</label>
+        <input type="text" id="cfgShortcutFinish" value="CommandOrControl+Shift+F">
+      </div>
+      <div class="form-group checkbox">
+        <input type="checkbox" id="cfgDrawCursor">
+        <label for="cfgDrawCursor">Desenhar cursor do mouse nos prints</label>
+      </div>
+      <div class="modal-actions">
+        <button id="btnSaveSettings" class="btn-primary">Salvar</button>
+        <button id="btnCloseSettings" class="btn-secondary">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "name": "craft-evidence-manager",
+  "version": "1.0.0",
+  "description": "Sistema Desktop de Padronização de Evidências de Teste - Craft QA",
+  "author": "Craft QA",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test:ppt": "node sample-generator.js",
+    "build:win": "electron-builder --win nsis",
+    "build:portable": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "pptxgenjs": "^3.12.0",
+    "screenshot-desktop": "^1.15.0",
+    "ffmpeg-static": "^5.2.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^24.9.0"
+  },
+  "build": {
+    "appId": "com.craft.evidencemanager",
+    "productName": "Craft Evidence Manager",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Craft Evidence Manager"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "!assets/exemplo/**",
+      "package.json"
+    ],
+    "portable": {
+      "artifactName": "Craft Evidencias ${version}.exe"
+    },
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ]
+  }
+}
