@@ -215,3 +215,32 @@ input, select, textarea { box-sizing: border-box; width: 100%; min-width: 0; }
 .video-editor { width: 100%; align-self: stretch; }
 .editor-area:has(#videoEditor:not(.hidden)) #videoPreview { max-height: max(200px, calc(100vh - 480px)); }
 .editor-area:has(#videoEditor:not(.hidden)) .media-container { min-height: 0; }
+
+
+/* ---------------- Tipo de teste, back-end e relatório ---------------- */
+.tipo-teste { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.tipo-teste label { font-size: 12px; font-weight: 600; color: var(--navy); margin: 0; }
+.seg { display: inline-flex; border: 1px solid #D5DCE2; border-radius: 6px; overflow: hidden; }
+.seg button { height: 34px; padding: 0 16px; border: 0; border-radius: 0; background: #fff; color: #6B7B88; font-weight: 600; }
+.seg button + button { border-left: 1px solid #D5DCE2; }
+.seg button.ativo { background: var(--navy); color: #fff; }
+.opcional { font-weight: 400; color: #8A97A3; font-size: 12px; text-transform: none; letter-spacing: 0; }
+.mono { font-family: 'Cascadia Mono', Consolas, monospace !important; font-size: 13px !important; }
+.dica-campo { font-size: 12px; color: #6B7B88; margin-top: 6px; line-height: 1.5; }
+.dica-campo code { font: 12px Consolas, monospace; background: #F1F4F6; padding: 0 4px; border-radius: 3px; color: var(--navy); }
+.collection-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.collection-linha .btn-secondary.btn-small { background: #fff; color: var(--navy); border-color: #D5DCE2; }
+.api-resumo { font-size: 13px; color: var(--navy); background: #F4F6F8; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; }
+.api-resumo pre { margin: 6px 0 0; font: 12px/1.5 Consolas, monospace; white-space: pre-wrap; word-break: break-all; color: #374151; max-height: 120px; overflow: auto; }
+.legenda-linha { display: flex; align-items: center; gap: 10px; margin-top: 10px; width: 100%; align-self: stretch; box-sizing: border-box; }
+.legenda-linha label { font-size: 12px; font-weight: 600; color: var(--navy); margin: 0; }
+.legenda-linha input { flex: 1; }
+.sem-evidencias { font-size: 13px; color: #6B7B88; padding: 30px 10px; text-align: center; }
+.saidas { display: inline-flex; gap: 16px; align-items: center; font-size: 13px; color: var(--navy); margin-left: auto; margin-right: 6px; }
+.saidas label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; font-weight: 500; }
+.saidas input { width: auto; accent-color: var(--red); }
+
+.dica-colar { margin: 8px 0 0; font-size: 12px; color: #6B7280; text-align: center; }
+.recomendado { color: var(--navy); font-weight: 600; }
+.acoes-esq { display: flex; gap: 12px; margin-right: auto; }
+.ct-info { margin-top: 6px; font-size: 12px; color: #6B7280; line-height: 1.4; }

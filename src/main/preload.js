@@ -12,6 +12,13 @@ contextBridge.exposeInMainWorld('api', {
   generatePptx: (data) => ipcRenderer.invoke('generate-pptx', data),
   saveVideo: (bytes, ext) => ipcRenderer.invoke('save-video', { bytes, ext }),
   editVideo: (filePath, partes) => ipcRenderer.invoke('edit-video', { filePath, partes }),
+  pickCollection: () => ipcRenderer.invoke('collection-pick'),
+  historiaInfo: (storyId) => ipcRenderer.invoke('historia-info', storyId),
+  cenarioInfo: (storyId, ct) => ipcRenderer.invoke('cenario-info', { storyId, ct }),
+  ask: (opcoes) => ipcRenderer.invoke('ask', opcoes),
+  generateEvidence: (dados, modo, saidas) => ipcRenderer.invoke('generate-evidence', { dados, modo, saidas }),
+  openPath: (p) => ipcRenderer.invoke('open-path', p),
+  showItem: (p) => ipcRenderer.invoke('show-item', p),
   videoAvailable: () => ipcRenderer.invoke('video-available'),
   
   // Comandos enviados pela barra flutuante
@@ -25,6 +32,7 @@ contextBridge.exposeInMainWorld('api', {
   showMessage: (title, msg) => ipcRenderer.send('show-message', title, msg),
 
   // Escutas de eventos do sistema repassados para a tela (app.js e floating.html)
+  attachFiles: () => ipcRenderer.invoke('attach-files'),
   onTriggerPrint: (callback) => ipcRenderer.on('trigger-print', (event, ...args) => callback(...args)),
   onTriggerToggleRecord: (callback) => ipcRenderer.on('trigger-toggle-record', (event, ...args) => callback(...args)),
   onTriggerFinish: (callback) => ipcRenderer.on('trigger-finish', (event, ...args) => callback(...args)),

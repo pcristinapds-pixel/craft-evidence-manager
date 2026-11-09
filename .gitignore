@@ -11,6 +11,16 @@ dist/*
 *.pptx
 exemplo-saida/
 
+# Evidências geradas pelo app (caso a pasta de evidências fique dentro do projeto)
+* - Relatório de evidências.html
+* - Histórico de execuções.html
+* - Bug (*.html
+Bugs/
+exec-*/
+cenario.json
+historia.json
+*.tmp
+
 # Vídeos gravados / editados
 *.mp4
 *.webm

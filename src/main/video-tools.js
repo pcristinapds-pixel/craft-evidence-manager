@@ -100,4 +100,13 @@ async function editar(entrada, partes, pastaSaida) {
   return resultados;
 }
 
-module.exports = { disponivel, info, duracaoReal, padronizar, editar, capa };
+// Versão leve do vídeo para ir dentro do relatório .html:
+// até 1600 px de largura, 15 quadros/s e compressão maior (texto de tela continua legível).
+async function compactar(entrada, saida) {
+  const r = await executar(['-y', '-i', entrada, '-map', '0:v:0', '-vf', "scale='min(1600,iw)':-2:flags=lanczos,fps=15," + PAR,
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '28', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', saida]);
+  if (r.code !== 0) throw new Error('Falha ao compactar o vídeo: ' + r.stderr.split('\n').slice(-3).join(' '));
+  return saida;
+}
+
+module.exports = { disponivel, info, duracaoReal, padronizar, editar, capa, compactar };

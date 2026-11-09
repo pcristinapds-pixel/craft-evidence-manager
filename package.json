@@ -6,6 +6,7 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node --test",
     "test:ppt": "node sample-generator.js",
     "build:win": "electron-builder --win nsis",
     "build:portable": "electron-builder --win portable"

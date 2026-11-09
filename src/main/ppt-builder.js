@@ -222,7 +222,7 @@ async function generatePPTX(data, saveFolder, logoPath) {
     const ehVideo = item.type === 'video';
     s.addText([
       { text: ehVideo ? 'Vídeo da execução' : `Passo ${++passo} de ${totalPrints}`, options: { bold: true, color: COR.vermelho } },
-      { text: '    ' + nome, options: { color: COR.acoEscuro } }
+      { text: '    ' + (item.legenda || nome), options: { color: COR.acoEscuro } }
     ], { x: 0.7, y: 0.37, w: W - 1.4 - 1.3, h: 0.45, fontFace: FONTE, fontSize: 13, fit: 'shrink', valign: 'middle', margin: 0 });
 
     const area = { x: 0.7, y: 1.0, w: W - 1.4, h: H - 1.0 - 0.72 };

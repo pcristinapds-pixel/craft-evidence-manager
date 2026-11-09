@@ -20,6 +20,13 @@
   <div id="screenSetup" class="container">
     <div class="card">
       <h3>Informações do Caso de Teste</h3>
+      <div class="tipo-teste">
+        <label>Tipo de teste</label>
+        <div class="seg" id="tipoTeste" role="group" aria-label="Tipo de teste">
+          <button type="button" data-v="front" class="ativo">Front-end</button>
+          <button type="button" data-v="back">Back-end</button>
+        </div>
+      </div>
       <div class="form-grid">
         <div class="form-group">
           <label>ID da História *</label>
@@ -28,6 +35,7 @@
         <div class="form-group">
           <label>Caso de Teste *</label>
           <input type="text" id="testCaseId" value="CT01">
+          <div id="ctInfo" class="ct-info hidden"></div>
         </div>
         <div class="form-group">
           <label>Responsável *</label>
@@ -47,6 +55,10 @@
           <input type="text" id="version" placeholder="Ex: v2.4.1">
         </div>
         <div class="form-group span-full">
+          <label>Título da História <span class="opcional">(opcional, aparece no topo do relatório)</span></label>
+          <input type="text" id="storyTitle" placeholder="Ex: Consulta de histórico do aéreo">
+        </div>
+        <div class="form-group span-full">
           <label>Título do Teste *</label>
           <input type="text" id="testTitle" placeholder="Ex: Consulta de histórico do aéreo">
         </div>
@@ -57,12 +69,29 @@
       </div>
     </div>
 
+    <div class="card hidden" id="cardApi">
+      <h3>Requisição</h3>
+      <div class="form-group">
+        <label>cURL <span class="opcional">(para caso precise reproduzir o teste)</span></label>
+        <textarea id="apiCurl" rows="5" spellcheck="false" class="mono" placeholder='curl -X GET "https://api.exemplo.com/v1/recurso" -H "Authorization: Bearer ..."'></textarea>
+        <div class="dica-campo">Por segurança, tokens, senhas, chaves de API e CPF aparecem no relatório como variáveis (<code>{{TOKEN}}</code>, <code>{{SENHA}}</code>…). Para executar, basta substituí-las pelos seus dados de acesso.</div>
+      </div>
+      <div class="collection-linha">
+        <button type="button" id="btnCollection" class="btn-secondary btn-small">Anexar collection</button>
+        <span id="collectionNome" class="opcional">Nenhuma collection anexada <b class="recomendado">(recomendado)</b></span>
+        <button type="button" id="btnCollectionRemover" class="btn-small danger hidden">Remover</button>
+      </div>
+    </div>
+
     <div class="card">
-      <h3>Selecione a Tela ou Janela para Captura</h3>
+      <h3 id="tituloCaptura">Selecione a Tela ou Janela para Captura</h3>
+      <p id="dicaCapturaBack" class="dica-campo hidden" style="margin-top:-6px">Capture o print do sucesso (Postman, Swagger, log, banco) com <b>F9</b> e destaque o que comprova o resultado.</p>
       <div id="sourcesList" class="sources-grid"></div>
     </div>
 
     <div class="actions">
+      <button id="btnIrRevisao" class="btn-secondary hidden">Voltar para a revisão</button>
+      <button id="btnReviewNoCapture" class="btn-secondary hidden">Revisar sem prints</button>
       <button id="btnStartCapture" class="btn-primary">Iniciar captura</button>
     </div>
   </div>
@@ -88,13 +117,20 @@
           <h4>Itens Capturados</h4>
           <div id="thumbList" class="thumb-list"></div>
           <button id="btnResumeCapture" class="btn-secondary" style="margin-top: 10px; width: 100%;">Capturar mais</button>
+          <button id="btnAnexar" class="btn-secondary" style="margin-top: 8px; width: 100%;">Anexar print ou vídeo</button>
+          <p class="dica-colar">Ou cole um print com <b>Ctrl+V</b></p>
         </div>
 
         <div class="editor-area">
+          <div id="apiResumo" class="api-resumo hidden"></div>
           <div id="canvasToolbar" class="canvas-toolbar hidden">
             <span>Clique e arraste sobre o print para destacar (Retângulo Vermelho)</span>
             <button id="btnUndoHighlight" class="btn-small">Desfazer</button>
             <button id="btnClearHighlights" class="btn-small danger">Limpar destaques</button>
+          </div>
+          <div id="legendaLinha" class="legenda-linha hidden">
+            <label for="legenda">Legenda</label>
+            <input type="text" id="legenda" placeholder="Ex.: Tabela com o evento EMITIDA (opcional, entra na busca do relatório)">
           </div>
           <div id="mediaContainer" class="media-container">
             <canvas id="annotationCanvas" class="hidden"></canvas>
@@ -131,13 +167,26 @@
             <div id="veResumo" class="ve-resumo"></div>
           </div>
           <div id="videoSemEdicao" class="ve-resumo hidden">A edição de vídeo não está disponível. Rode "npm install" na pasta do projeto para instalar o FFmpeg.</div>
+          <div id="semEvidencias" class="sem-evidencias hidden">Nenhum print ou vídeo neste cenário. Use <b>Capturar mais</b>, <b>Anexar print ou vídeo</b> ou cole um print com <b>Ctrl+V</b>.</div>
         </div>
+      </div>
+
+      <div class="form-group hidden" id="grupoObservacao" style="margin-top:18px">
+        <label for="observacao">Observação <span class="opcional">(o que deu errado, bug aberto, massa usada; vai para o relatório do bug)</span></label>
+        <textarea id="observacao" rows="2" placeholder="Ex.: O filtro não retorna registros quando o período inclui o dia atual. Bug aberto: QMS-1102."></textarea>
       </div>
     </div>
 
     <div class="actions">
-      <button id="btnDiscardAll" class="btn-danger">Descartar tudo</button>
-      <button id="btnGeneratePPT" class="btn-primary">Gerar PPT</button>
+      <span class="acoes-esq">
+        <button id="btnVoltar" class="btn-secondary">← Voltar</button>
+        <button id="btnDiscardAll" class="btn-danger">Descartar tudo</button>
+      </span>
+      <span class="saidas">
+        <label><input type="checkbox" id="outRelatorio" checked> Relatório da história</label>
+        <label><input type="checkbox" id="outPpt"> PPT do cenário</label>
+      </span>
+      <button id="btnGeneratePPT" class="btn-primary">Gerar evidência</button>
     </div>
   </div>
 
@@ -145,7 +194,7 @@
     <div class="modal-content">
       <h3>Configurações do Sistema</h3>
       <div class="form-group">
-        <label>Pasta de Destino dos PPTs</label>
+        <label>Pasta das Evidências (relatórios e PPTs)</label>
         <div class="folder-input">
           <input type="text" id="cfgSavePath" readonly>
           <button id="btnSelectFolder" class="btn-secondary">Alterar</button>
@@ -182,6 +231,7 @@
     </div>
   </div>
 
+  <script src="bdd.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

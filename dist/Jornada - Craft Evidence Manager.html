@@ -196,6 +196,54 @@
     .topo img { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* novidades: tipo de teste, back-end, revisão, relatório */
+  .seg-linha { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 4px; margin-left: -4px; width: max-content; }
+  .seg-rot { font-size: 12px; font-weight: 600; }
+  .seg { display: inline-flex; border: 1px solid var(--linha); border-radius: 6px; overflow: hidden; font-size: 13px; }
+  .seg b, .seg i { font-style: normal; padding: 6px 14px; }
+  .seg b { background: var(--ardosia); color: #fff; font-weight: 600; } .seg i { color: var(--cinza); }
+  .campo label small { font-weight: 400; color: var(--cinza); text-transform: none; letter-spacing: 0; }
+  .aviso-ct { font-size: 11px; color: var(--cinza); margin-top: 4px; }
+  .mono-bloco { font-family: 'IBM Plex Mono', Consolas, monospace; font-size: 12px; min-height: 64px; height: auto; align-items: flex-start; padding: 10px 12px; line-height: 1.6; display: block; }
+  .dica-mini { font-size: 12px; color: var(--cinza); margin: 8px 0; padding: 2px 4px; margin-left: -4px; }
+  .dica-mini code { font-family: 'IBM Plex Mono', monospace; background: var(--fundo); padding: 0 4px; border-radius: 3px; }
+  .linha-col { display: flex; align-items: center; gap: 12px; font-size: 12px; padding: 4px; margin-left: -4px; width: max-content; }
+  .cinza { color: var(--cinza); } .linha-col b { color: var(--ardosia); }
+  .legenda-mock { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; padding: 2px; }
+  .legenda-mock .entrada { flex: 1; height: 30px; }
+  .saidas-mock { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px; }
+  .chk { width: 14px; height: 14px; border: 1.5px solid var(--cinza-claro); border-radius: 3px; display: inline-block; margin-left: 6px; }
+  .chk.on { background: var(--vermelho); border-color: var(--vermelho); }
+  .dialogo { max-width: 560px; margin: 40px auto; background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 22px 24px; box-shadow: 0 12px 32px rgba(16,24,32,.08); font-size: 14px; }
+  .dialogo .dlg-tit { font-size: 12px; color: var(--cinza); margin-bottom: 10px; }
+  .dialogo p { margin: 4px 0; }
+  .rel { background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 26px 30px; font-size: 13px; }
+  .rel-cab { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 6px; margin: -6px; }
+  .rel-cab img { height: 30px; }
+  .rel-cab small { color: var(--vermelho); font-weight: 600; font-size: 11px; }
+  .rel-cab h4 { margin: 0; font-size: 18px; } .rel-cab h4 span { color: var(--cinza-claro); font-weight: 400; }
+  .rel-meta { width: 100%; display: flex; gap: 22px; flex-wrap: wrap; color: var(--cinza); font-size: 12px; margin-top: 6px; }
+  .rel-meta b { color: var(--tinta); font-weight: 500; margin-left: 4px; }
+  .pt { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin: 0 3px 0 6px; } .pt.ok { background: #0E7C4A; } .pt.erro { background: var(--vermelho); }
+  .rel-busca { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 18px 0; padding: 12px 0; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); }
+  .rel-campo { flex: 1; min-width: 180px; border: 1px solid var(--linha); background: var(--fundo); border-radius: 6px; padding: 6px 10px; color: var(--cinza); font-size: 12px; }
+  .rel-f { border: 1px solid var(--linha); border-radius: 6px; padding: 5px 9px; font-size: 11px; color: var(--cinza); } .rel-f.on { background: var(--ardosia); color: #fff; border-color: var(--ardosia); }
+  .rel-tit { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; }
+  .rel-st { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; } .rel-st.ok { background: #E7F6EE; color: #0E7C4A; } .rel-st.erro { background: #FDECEC; color: var(--vermelho); }
+  .rel-bdd { background: var(--fundo); border-left: 3px solid var(--linha); padding: 10px 14px; line-height: 1.8; margin-bottom: 12px; }
+  .rel-obs { background: #FDF2F2; border: 1px solid #F6D3D3; color: #9B1C1C; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; }
+  .rel-curl { position: relative; background: #1F2933; color: #D1D5DB; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; border-radius: 6px; padding: 12px 14px; line-height: 1.7; margin-bottom: 12px; }
+  .rel-curl em { color: #FCA5A5; font-style: normal; }
+  .rel-copiar { position: absolute; top: 8px; right: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; border: 1px solid #4B5563; border-radius: 4px; padding: 2px 8px; }
+  .rel-evs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .rel-evs > div { padding: 4px; margin: -4px; }
+  .rel-img { aspect-ratio: 16/9; border: 1px solid var(--linha); border-radius: 4px; background: linear-gradient(var(--ardosia) 0 12%, var(--fundo) 12%); }
+  .rel-img.video { background: #11161B; color: #fff; display: grid; place-items: center; font-size: 22px; }
+  .rel-evs small { display: block; margin-top: 6px; color: var(--cinza); } .rel-evs small b { color: var(--tinta); } .rel-evs u { float: right; color: var(--tinta); text-decoration: none; }
+  .rel-cab + .rel-cen { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--linha); }
+  .rel-rod { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--linha); color: var(--cinza); font-size: 12px; }
+  .rel-rod u { color: var(--tinta); text-decoration: none; font-weight: 500; }
 </style>
 </head>
 <body>
@@ -221,11 +269,11 @@ const LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAABuCAYAAAAZOZ6h
 const ETAPAS = [
   {
     id: 'configurar', nome: 'Configurar', titulo: 'Configurações (uma vez)',
-    sub: 'Na primeira vez, ajuste onde os PPTs serão salvos e o endereço do Jira. Cada QA tem as próprias configurações.',
+    sub: 'Na primeira vez, ajuste onde as evidências serão salvas e o endereço do Jira. Cada QA tem as próprias configurações.',
     tela: () => `
       <div class="janela"><div class="barra-app"><img src="${LOGO}" alt=""><span class="esp">Configurações do sistema</span></div>
       <div class="conteudo" style="max-width:520px">
-        <div class="campo alvo" data-k="pasta" style="margin-bottom:14px"><span class="n"></span><label>Pasta de destino dos PPTs</label><div class="entrada cheio">C:\\Users\\voce\\Documents\\Evidencias <span class="btn sm">Alterar</span></div></div>
+        <div class="campo alvo" data-k="pasta" style="margin-bottom:14px"><span class="n"></span><label>Pasta das evidências</label><div class="entrada cheio">C:\\Users\\voce\\Documents\\Evidencias <span class="btn sm">Alterar</span></div></div>
         <div class="campo alvo" data-k="url" style="margin-bottom:14px"><span class="n"></span><label>URL base das histórias (Jira)</label><div class="entrada cheio">https://suaempresa.atlassian.net/browse/</div></div>
         <div class="grade alvo" data-k="atalhos" style="grid-template-columns:repeat(2,1fr);margin-bottom:14px;padding:4px;margin-left:-4px;margin-right:-4px"><span class="n"></span>
           <div class="campo"><label>Atalho do print</label><div class="entrada cheio">F9</div></div>
@@ -237,8 +285,8 @@ const ETAPAS = [
         <div class="acoes"><span class="btn">Cancelar</span><span class="btn prim alvo" data-k="salvar"><span class="n"></span>Salvar</span></div>
       </div></div>`,
     campos: {
-      pasta: { nome: 'Pasta de destino dos PPTs', obrig: true, texto: 'Onde os arquivos de evidência serão salvos. Depois de gerar o PPT, essa pasta abre automaticamente.', exemplo: 'C:\\Users\\voce\\Documents\\Evidencias', dica: 'Se o time usa uma pasta de rede ou do OneDrive para evidências, aponte direto para ela.' },
-      url: { nome: 'URL base das histórias', obrig: false, texto: 'O endereço do Jira seguido de /browse/. O app junta esse endereço com o ID da história para criar o link no slide.', exemplo: 'https://suaempresa.atlassian.net/browse/\n+ QMS-1036\n= link para a história QMS-1036', dica: 'Precisa terminar com /browse/. Sem isso, o ID aparece no slide, mas não abre a história.' },
+      pasta: { nome: 'Pasta das evidências', obrig: true, texto: 'Onde o app cria uma pasta por história, com o relatório, o histórico, os relatórios de bug, os prints, os vídeos e os PPTs.', exemplo: 'C:\\Users\\voce\\Documents\\Evidencias', dica: 'Se o time usa uma pasta de rede ou do OneDrive para evidências, aponte direto para ela.' },
+      url: { nome: 'URL base das histórias', obrig: false, texto: 'O endereço do Jira seguido de /browse/. O app junta esse endereço com o ID da história para criar o link no relatório.', exemplo: 'https://suaempresa.atlassian.net/browse/\n+ QMS-1036\n= link para a história QMS-1036', dica: 'Precisa terminar com /browse/. Sem isso, o ID aparece no relatório, mas não abre a história.' },
       atalhos: { nome: 'Atalhos', obrig: false, texto: 'As teclas usadas durante o teste. Elas só funcionam enquanto uma captura está em andamento; fora dela, as teclas voltam ao normal nos outros programas.', exemplo: 'F9  →  tirar print\nCtrl+Shift+R  →  gravar / parar\nCtrl+Shift+P  →  pausar / retomar\nCtrl+Shift+F  →  concluir', dica: 'Só altere se o sistema que você testa usar alguma dessas teclas.' },
       cursor: { nome: 'Desenhar cursor do mouse', obrig: false, texto: 'Normalmente o Windows já inclui o cursor nos prints. Esta opção faz o app desenhar o cursor por conta própria.', dica: 'Deixe desmarcado. Marque apenas se o cursor não aparecer nos seus prints.' },
       salvar: { nome: 'Salvar', obrig: false, texto: 'Grava as configurações. Elas continuam valendo nas próximas vezes que você abrir o app, inclusive em versões novas.' }
@@ -246,34 +294,61 @@ const ETAPAS = [
   },
   {
     id: 'caso', nome: 'Caso de teste', titulo: 'Preencher o caso de teste',
-    sub: 'Tudo o que você preenche aqui vai para o slide 2 e para o nome do arquivo.',
+    sub: 'Tudo o que você preenche aqui vai para o relatório da história.',
     tela: () => `
       <div class="janela"><div class="barra-app"><img src="${LOGO}" alt=""><span class="esp">Craft QA Evidence Manager</span><span>Configurações</span></div>
       <div class="conteudo">
         <p class="titulo-sec">Informações do caso de teste</p>
+        <div class="seg-linha alvo" data-k="tipo"><span class="n"></span><span class="seg-rot">Tipo de teste</span><span class="seg"><b>Front-end</b><i>Back-end</i></span></div>
         <div class="grade">
           <div class="campo alvo" data-k="historia"><span class="n"></span><label>ID DA HISTÓRIA *</label><div class="entrada cheio">QMS-1036</div></div>
-          <div class="campo alvo" data-k="ct"><span class="n"></span><label>CASO DE TESTE *</label><div class="entrada cheio">CT01</div></div>
+          <div class="campo alvo" data-k="ct"><span class="n"></span><label>CASO DE TESTE *</label><div class="entrada cheio">CT03</div><span class="aviso-ct">Já evidenciado · Falhou · 09/11/2026 10:41</span></div>
           <div class="campo alvo" data-k="responsavel"><span class="n"></span><label>RESPONSÁVEL *</label><div class="entrada cheio">Ana Souza</div></div>
           <div class="campo alvo" data-k="ambiente"><span class="n"></span><label>AMBIENTE *</label><div class="entrada cheio">Homologação <span>▾</span></div></div>
           <div class="campo alvo" data-k="versao"><span class="n"></span><label>VERSÃO DA APLICAÇÃO</label><div class="entrada cheio">2.14.0</div></div>
-          <div class="campo alvo largo" data-k="titulo"><span class="n"></span><label>TÍTULO DO TESTE *</label><div class="entrada cheio">Consulta de histórico do aéreo</div></div>
+          <div class="campo alvo largo" data-k="titulohist"><span class="n"></span><label>TÍTULO DA HISTÓRIA <small>(opcional)</small></label><div class="entrada cheio">Consulta de histórico do aéreo</div></div>
+          <div class="campo alvo largo" data-k="titulo"><span class="n"></span><label>TÍTULO DO TESTE *</label><div class="entrada cheio">Filtrar pelo localizador</div></div>
           <div class="campo alvo largo" data-k="bdd"><span class="n"></span><label>CENÁRIO DE TESTE (BDD) *</label>
-            <div class="bdd-wrap"><div class="bdd-real" id="bddReal"></div><textarea class="entrada" id="bddTxt" spellcheck="false" aria-label="Cenário BDD de exemplo">Dado que estou logado como agente de viagens
-E possuo uma reserva aérea emitida
-Quando acesso a tela de histórico do aéreo
-Então devo visualizar todas as alterações da reserva</textarea></div>
+            <div class="bdd-wrap"><div class="bdd-real" id="bddReal"></div><textarea class="entrada" id="bddTxt" spellcheck="false" aria-label="Cenário BDD de exemplo">Dado que estou na tela de histórico do aéreo
+E possuo uma reserva emitida
+Quando filtro pelo localizador LOC8F3K2
+Então vejo os 3 eventos da reserva</textarea></div>
           </div>
         </div>
       </div></div>`,
     campos: {
-      historia: { nome: 'ID da história', obrig: true, texto: 'O código da história no Jira. Aparece em vermelho no topo do slide 2, vira link para a história e é o começo do nome do arquivo.', exemplo: 'QMS-1036', dica: 'Copie o ID exatamente como está no Jira. Esse campo continua preenchido para os próximos cenários da mesma história.' },
-      ct: { nome: 'Caso de teste', obrig: true, texto: 'O identificador do cenário dentro da história. Cada caso de teste gera um PPT próprio.', exemplo: 'CT01', dica: 'Depois de gerar o PPT, o app avança sozinho para o próximo número (CT01 vira CT02).' },
-      responsavel: { nome: 'Responsável', obrig: true, texto: 'Quem executou o teste. Aparece nas informações do slide 2.', exemplo: 'Ana Souza', dica: 'Use nome e sobrenome, do mesmo jeito em todas as evidências.' },
+      tipo: { nome: 'Tipo de teste', obrig: true, texto: 'Front-end para testes de tela, Back-end para testes de API. No back-end aparece o bloco da requisição (próxima etapa).', dica: 'O relatório da história pode ter cenários dos dois tipos, com filtro para cada um.' },
+      historia: { nome: 'ID da história', obrig: true, texto: 'O código da história no Jira. É o nome da pasta e do relatório, e vira link para a história.', exemplo: 'QMS-1036', dica: 'Se a história já tem relatório, o título dela é preenchido sozinho.' },
+      ct: { nome: 'Caso de teste', obrig: true, texto: 'O identificador do cenário dentro da história. Se o CT já foi evidenciado, aparece um aviso embaixo do campo e o título e o BDD da última execução são preenchidos.', exemplo: 'CT03\nJá evidenciado · Falhou · 09/11/2026 10:41', dica: 'Depois de gerar a evidência, o app avança sozinho para o próximo número (CT03 vira CT04).' },
+      responsavel: { nome: 'Responsável', obrig: true, texto: 'Quem executou o teste.', exemplo: 'Ana Souza', dica: 'Use nome e sobrenome, do mesmo jeito em todas as evidências.' },
       ambiente: { nome: 'Ambiente', obrig: true, texto: 'Onde o teste foi executado.', exemplo: 'QA · Desenvolvimento · Homologação · Produção', dica: 'Confira antes de começar: uma evidência com o ambiente errado perde o valor.' },
-      versao: { nome: 'Versão da aplicação', obrig: false, texto: 'A versão do sistema testado. Ajuda a saber, no futuro, em qual entrega o comportamento foi validado.', exemplo: '2.14.0', dica: 'Se não souber a versão, deixe em branco. No slide aparece um traço.' },
-      titulo: { nome: 'Título do teste', obrig: true, texto: 'O nome do cenário, em poucas palavras. É o título grande do slide 2 e o final do nome do arquivo.', exemplo: 'QMS-1036 - CT01 - Consulta de histórico do aéreo.pptx', dica: 'Descreva o que é testado, não o resultado. Prefira "Consulta de histórico do aéreo" a "Histórico funcionando".' },
-      bdd: { nome: 'Cenário de teste (BDD)', obrig: true, texto: 'Os passos do teste no formato Dado / Quando / Então, um por linha. No slide, as palavras-chave aparecem em vermelho e os "E" em cinza, como no campo ao lado.', exemplo: 'Dado que <contexto inicial>\nE <contexto adicional>\nQuando <ação do usuário>\nEntão <resultado esperado>', dica: 'Experimente: digite no campo do cenário e veja as palavras-chave mudarem de cor.' }
+      versao: { nome: 'Versão da aplicação', obrig: false, texto: 'A versão do sistema testado. Ajuda a saber, no futuro, em qual entrega o comportamento foi validado.', exemplo: '2.14.0' },
+      titulohist: { nome: 'Título da história', obrig: false, texto: 'O nome da história. Aparece no topo do relatório, ao lado do ID.', exemplo: 'QMS-1036 – Consulta de histórico do aéreo' },
+      titulo: { nome: 'Título do teste', obrig: true, texto: 'O nome do cenário, em poucas palavras. Aparece no sumário e no topo do cenário no relatório.', dica: 'Descreva o que é testado, não o resultado. Prefira "Filtrar pelo localizador" a "Filtro funcionando".' },
+      bdd: { nome: 'Cenário de teste (BDD)', obrig: true, texto: 'Os passos do teste, um por linha. O app só deixa continuar se houver linhas começando com Dado, Quando e Então, nessa ordem. E e Mas podem entrar entre eles.', exemplo: 'Dado que <contexto inicial>\nE <contexto adicional>\nQuando <ação do usuário>\nEntão <resultado esperado>', dica: 'Experimente: digite no campo do cenário e veja as palavras-chave mudarem de cor, como no relatório.' }
+    }
+  },
+  {
+    id: 'backend', nome: 'Back-end', titulo: 'Testes de back-end',
+    sub: 'Com o tipo Back-end, aparece o bloco da requisição. O objetivo é qualquer pessoa conseguir reproduzir o teste.',
+    tela: () => `
+      <div class="janela"><div class="barra-app"><img src="${LOGO}" alt=""><span class="esp">Craft QA Evidence Manager</span></div>
+      <div class="conteudo">
+        <p class="titulo-sec">Requisição</p>
+        <div class="campo alvo" data-k="curl"><span class="n"></span><label>CURL <small>(para caso precise reproduzir o teste)</small></label>
+          <div class="entrada cheio mono-bloco">curl -X GET "https://api.craft.com/v1/history/aerial?localizador=LOC8F3K2" \<br>&nbsp;&nbsp;-H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIi…"</div></div>
+        <p class="dica-mini alvo" data-k="variaveis"><span class="n"></span>Por segurança, tokens, senhas, chaves de API e CPF aparecem no relatório como variáveis (<code>{{TOKEN}}</code>, <code>{{SENHA}}</code>…).</p>
+        <div class="linha-col alvo" data-k="collection"><span class="n"></span><span class="btn sm">Anexar collection</span><span class="cinza">Nenhuma collection anexada <b>(recomendado)</b></span></div>
+        <p class="titulo-sec" style="margin-top:22px">Print do sucesso</p>
+        <div class="fontes"><div class="fonte escolhida alvo" data-k="print"><span class="n"></span><div class="tela"></div>Postman</div><div class="fonte"><div class="tela"></div>Tela 1</div></div>
+        <div class="acoes"><span class="btn alvo" data-k="semprints"><span class="n"></span>Revisar sem prints</span><span class="btn prim">Capturar prints</span></div>
+      </div></div>`,
+    campos: {
+      curl: { nome: 'cURL', obrig: false, texto: 'A requisição que você executou. Vai para o relatório com botão de copiar, para qualquer pessoa reproduzir o teste.', exemplo: 'No Postman: botão Code (</>) → cURL → copiar', dica: 'A resposta da API não vai para o relatório: quem precisar, executa o cURL.' },
+      variaveis: { nome: 'Dados sensíveis viram variáveis', obrig: false, texto: 'O app troca automaticamente tokens, senhas, chaves de API e CPF por variáveis no padrão do Postman. Nenhum segredo fica no relatório.', exemplo: 'Authorization: Bearer eyJhbGci…\n→ Authorization: Bearer {{TOKEN}}', dica: 'Para executar, basta substituir as variáveis pelos seus dados de acesso.' },
+      collection: { nome: 'Anexar collection', obrig: false, texto: 'O arquivo .json da collection do Postman ou do Insomnia. No relatório, aparece o botão Baixar collection.', dica: 'Recomendado: com a collection, o dev importa e executa em segundos.' },
+      print: { nome: 'Print do sucesso', obrig: false, texto: 'Capture com F9 a tela que comprova o resultado: Postman, Swagger, log ou banco. Na revisão, destaque o ponto principal, por exemplo o status 200 ou o registro gravado.' },
+      semprints: { nome: 'Revisar sem prints', obrig: false, texto: 'Vai direto para a revisão, sem capturar telas. Nesse caso, o cURL é obrigatório.' }
     }
   },
   {
@@ -314,43 +389,52 @@ Então devo visualizar todas as alterações da reserva</textarea></div>
     campos: {
       contador: { nome: 'Contador', obrig: false, texto: 'Mostra quantos prints já foram tirados. Durante a gravação, também mostra o tempo do vídeo; com a gravação pausada, mostra "pausado" e o tempo congelado.' },
       print: { nome: 'Print', obrig: false, texto: 'Tira um print da tela ou janela escolhida. O botão pisca para confirmar.', exemplo: 'Atalho: F9', dica: 'O atalho funciona mesmo com o app minimizado e outro programa em foco. Tire um print a cada passo importante do cenário.' },
-      gravar: { nome: 'Gravar / Parar', obrig: false, texto: 'Inicia a gravação de vídeo. Durante a gravação, como na imagem, o botão fica vermelho e vira "Parar".', exemplo: 'Atalho: Ctrl+Shift+R (iniciar e parar)', dica: 'Dá para combinar vídeo e prints no mesmo cenário. Prefira vídeos de até 1 ou 2 minutos para o PPT não ficar pesado.' },
+      gravar: { nome: 'Gravar / Parar', obrig: false, texto: 'Inicia a gravação de vídeo. Durante a gravação, como na imagem, o botão fica vermelho e vira "Parar".', exemplo: 'Atalho: Ctrl+Shift+R (iniciar e parar)', dica: 'Dá para combinar vídeo e prints no mesmo cenário. Prefira vídeos de até 1 ou 2 minutos para o relatório não ficar pesado.' },
       pausar: { nome: 'Pausar / Retomar', obrig: false, texto: 'Aparece só durante a gravação. Pausa o vídeo sem encerrá-lo: o cronômetro para e mostra "pausado". O trecho pausado não entra no vídeo.', exemplo: 'Atalho: Ctrl+Shift+P (pausar e retomar)', dica: 'Use para não gravar esperas: carregamentos longos, busca de massa de dados, uma mensagem que chegou no meio do teste.' },
       concluir: { nome: 'Concluir', obrig: false, texto: 'Encerra a captura e abre a tela de revisão. Se houver gravação em andamento, ela é salva antes.', exemplo: 'Atalho: Ctrl+Shift+F' }
     }
   },
   {
-    id: 'revisar', nome: 'Revisar', titulo: 'Revisar as evidências',
-    sub: 'Antes de gerar o PPT, confira os prints, destaque o que importa e defina o resultado do teste.',
+    id: 'revisar', nome: 'Revisar', titulo: 'Revisar e gerar a evidência',
+    sub: 'Antes de gerar, confira os prints, destaque o que importa e defina o resultado do teste.',
     tela: () => `
       <div class="janela"><div class="barra-app"><img src="${LOGO}" alt=""><span class="esp">Craft QA Evidence Manager</span></div>
       <div class="conteudo">
         <div class="rev-topo"><p class="titulo-sec" style="margin:0">Revisão de evidências capturadas</p>
-          <div class="campo alvo" data-k="status"><span class="n"></span><label>STATUS DO TESTE *</label><div class="select">Passou <span>▾</span></div></div></div>
+          <div class="campo alvo" data-k="status"><span class="n"></span><label>STATUS DO TESTE *</label><div class="select">Falhou <span>▾</span></div></div></div>
         <div class="rev">
           <div class="miniaturas alvo" data-k="itens"><span class="n"></span>
             <div class="mini ativa"><div class="img"></div><div class="rod"><span>Passo 1 • destacado</span><i class="seta">▲</i><i class="seta">▼</i></div></div>
             <div class="mini"><div class="img"></div><div class="rod"><span>Passo 2</span><i class="seta">▲</i><i class="seta">▼</i></div></div>
             <span class="btn sm alvo" data-k="mais" style="justify-content:center"><span class="n"></span>Capturar mais</span>
+            <span class="btn sm alvo" data-k="anexar" style="justify-content:center"><span class="n"></span>Anexar print ou vídeo</span>
+            <span class="cinza" style="font-size:11px;text-align:center">Ou cole com <b>Ctrl+V</b></span>
           </div>
           <div>
             <div class="editor-ferr"><span class="esp">Clique e arraste sobre o print para destacar</span>
-              <span class="btn sm alvo" data-k="desfazer"><span class="n"></span>Desfazer</span>
-              <span class="btn sm txt alvo" data-k="limpar"><span class="n"></span>Limpar destaques</span></div>
+              <span class="btn sm">Desfazer</span><span class="btn sm txt">Limpar destaques</span></div>
+            <div class="legenda-mock alvo" data-k="legenda"><span class="n"></span><b>Legenda</b><span class="entrada cheio">Lista vazia com o filtro aplicado</span></div>
             <div class="print alvo" data-k="destacar"><span class="n"></span><div class="linhas"><i></i><i></i><i></i><i></i><i></i></div><div class="destaque"></div></div>
           </div>
         </div>
-        <div class="acoes"><span class="btn txt alvo" data-k="descartar"><span class="n"></span>Descartar tudo</span><span class="btn prim alvo" data-k="gerar"><span class="n"></span>Gerar PPT</span></div>
+        <div class="campo alvo" data-k="obs" style="margin-top:14px"><span class="n"></span><label>OBSERVAÇÃO <small>(só aparece com Falhou ou Bloqueado)</small></label><div class="entrada cheio">A lista volta vazia quando o período inclui o dia atual. Bug aberto: QMS-1102.</div></div>
+        <div class="acoes" style="justify-content:space-between">
+          <span style="display:flex;gap:8px"><span class="btn alvo" data-k="voltar"><span class="n"></span>← Voltar</span><span class="btn txt alvo" data-k="descartar"><span class="n"></span>Descartar tudo</span></span>
+          <span style="display:flex;gap:12px;align-items:center"><span class="saidas-mock alvo" data-k="saidas"><span class="n"></span><span class="chk on"></span>Relatório da história <span class="chk"></span>PPT do cenário</span><span class="btn prim alvo" data-k="gerar"><span class="n"></span>Gerar evidência</span></span>
+        </div>
       </div></div>`,
     campos: {
-      status: { nome: 'Status do teste', obrig: true, texto: 'O resultado da execução. Aparece no slide 2 com a cor correspondente.', exemplo: 'Passou (verde) · Falhou (vermelho)\nBloqueado (laranja) · Não executado (cinza)', dica: 'Se o teste falhou, gere a evidência mesmo assim, com o status Falhou. Ela ajuda a abrir e acompanhar o bug.' },
-      itens: { nome: 'Itens capturados', obrig: false, texto: 'Todos os prints e vídeos, na ordem em que vão aparecer nos slides. Clique numa miniatura para abri-la ao lado. Ao abrir um vídeo, aparece o editor de vídeo (próxima etapa).', dica: 'Use ▲ ▼ para mudar a ordem. Para excluir, passe o mouse sobre a miniatura e clique no ✕.' },
+      status: { nome: 'Status do teste', obrig: true, texto: 'O resultado da execução. Aparece no relatório com a cor correspondente.', exemplo: 'Passou · Falhou · Bloqueado · Não executado', dica: 'Falhou e Bloqueado geram também um relatório de bug só daquele cenário.' },
+      itens: { nome: 'Itens capturados', obrig: false, texto: 'Todos os prints e vídeos, na ordem em que vão aparecer no relatório. Clique numa miniatura para abri-la ao lado. Ao abrir um vídeo, aparece o editor de vídeo (próxima etapa).', dica: 'Use ▲ ▼ para mudar a ordem. Para excluir, passe o mouse sobre a miniatura e clique no ✕.' },
       mais: { nome: 'Capturar mais', obrig: false, texto: 'Volta para o teste sem perder o que já foi capturado. Os novos prints entram no fim da lista.' },
-      destacar: { nome: 'Destacar uma área', obrig: false, texto: 'Com um print aberto, clique e arraste para desenhar um retângulo vermelho. Ele vai junto do print para o slide.', dica: 'Destaque só o ponto que comprova o resultado: um campo, uma mensagem, um valor. Um retângulo bem posicionado vale mais que vários.' },
-      desfazer: { nome: 'Desfazer', obrig: false, texto: 'Remove o último retângulo desenhado no print aberto.' },
-      limpar: { nome: 'Limpar destaques', obrig: false, texto: 'Remove todos os retângulos do print aberto e volta ao print original.' },
-      descartar: { nome: 'Descartar tudo', obrig: false, texto: 'Apaga todos os prints e vídeos do cenário atual. O app pede confirmação antes.', dica: 'Útil quando você capturou a tela errada: descarte, escolha a tela certa e comece de novo.' },
-      gerar: { nome: 'Gerar PPT', obrig: false, texto: 'Cria o PowerPoint na pasta configurada e abre a pasta. Em seguida, o app volta para a tela inicial com o próximo CT sugerido.', exemplo: 'QMS-1036 - CT01 - Consulta de histórico do aéreo.pptx', dica: 'Se já existir um arquivo com o mesmo nome, o app cria uma cópia com (2) em vez de sobrescrever.' }
+      anexar: { nome: 'Anexar ou colar', obrig: false, texto: 'Inclui prints e vídeos que você já tem no computador (png, jpg, mp4, mov, webm…), vários de uma vez. Também dá para copiar uma imagem e colar com Ctrl+V.', exemplo: 'Win+Shift+S → recortar a tela → Ctrl+V na revisão', dica: 'Os itens anexados funcionam como os capturados: dá para destacar, pôr legenda e editar o vídeo.' },
+      legenda: { nome: 'Legenda', obrig: false, texto: 'Uma frase curta para o print ou o vídeo aberto. Aparece embaixo da evidência no relatório e entra na pesquisa.', exemplo: 'Lista vazia com o filtro aplicado' },
+      destacar: { nome: 'Destacar uma área', obrig: false, texto: 'Com um print aberto, clique e arraste para desenhar um retângulo vermelho. Desfazer remove o último; Limpar destaques remove todos.', dica: 'Destaque só o ponto que comprova o resultado: um campo, uma mensagem, um valor.' },
+      obs: { nome: 'Observação', obrig: false, texto: 'Aparece só quando o status é Falhou ou Bloqueado. Descreva o que deu errado, o bug aberto ou a massa usada. Vai para o relatório e para o relatório de bug.' },
+      voltar: { nome: 'Voltar', obrig: false, texto: 'Volta aos dados do cenário para corrigir algum campo, sem perder prints, destaques e legendas. Para retomar, clique em "Voltar para a revisão".' },
+      descartar: { nome: 'Descartar tudo', obrig: false, texto: 'Apaga todos os prints e vídeos do cenário atual. O app pede confirmação antes.', dica: 'Útil quando você capturou a tela errada.' },
+      saidas: { nome: 'O que gerar', obrig: false, texto: 'Relatório da história (marcado por padrão) e, se quiser, o PPT do cenário no modelo antigo. O app lembra a sua escolha.' },
+      gerar: { nome: 'Gerar evidência', obrig: false, texto: 'Salva o cenário, atualiza o relatório da história e, se o teste não passou, cria o relatório de bug. Depois oferece abrir o relatório, o bug, o PPT ou a pasta, e volta para a tela inicial com o próximo CT.' }
     }
   },
   {
@@ -377,14 +461,14 @@ Então devo visualizar todas as alterações da reserva</textarea></div>
           <span class="btn sm txt alvo" data-k="desfazer"><span class="n"></span>Desfazer edição</span>
           <span class="btn sm prim alvo" data-k="aplicar"><span class="n"></span>Aplicar edição</span>
         </div>
-        <p class="ve-res alvo" data-k="resumo"><span class="n"></span>Resultado: <b>00:08.0</b> de vídeo, dividido em <b>2 vídeos</b> (cada um vira um slide).</p>
+        <p class="ve-res alvo" data-k="resumo"><span class="n"></span>Resultado: <b>00:08.0</b> de vídeo, dividido em <b>2 vídeos</b> (cada um vira um item da lista).</p>
       </div></div>`,
     campos: {
       linha: { nome: 'Linha do tempo', obrig: false, texto: 'Representa o vídeo inteiro. A linha vermelha marca o ponto atual. Clique em qualquer lugar da linha para ir até aquele ponto.', dica: 'Use as setas ← → do teclado para avançar ou voltar meio segundo e acertar o ponto exato.' },
       alcas: { nome: 'Recortar início e fim', obrig: false, texto: 'Arraste as alças das pontas para tirar o começo e o fim do vídeo. As partes que ficam de fora aparecem escurecidas.', exemplo: 'Também dá para posicionar a linha vermelha e clicar em\n"Começar aqui" ou "Terminar aqui".', dica: 'Comece o vídeo direto no primeiro passo do cenário e termine logo depois do resultado esperado.' },
       trecho: { nome: 'Trecho excluído', obrig: false, texto: 'A parte listrada de vermelho será removida do vídeo final. O vídeo continua emendado, como se o trecho nunca tivesse sido gravado.', dica: 'Mudou de ideia? Passe o mouse sobre o trecho e clique no ✕ para mantê-lo.' },
       btntrecho: { nome: 'Excluir trecho', obrig: false, texto: 'Posicione a linha vermelha no começo do trecho indesejado e clique em "Excluir trecho". Depois vá até o fim do trecho e clique de novo.', exemplo: '1º clique: início do trecho\n2º clique: fim do trecho', dica: 'Pode excluir quantos trechos precisar.' },
-      dividir: { nome: 'Ponto de divisão', obrig: false, texto: 'A linha vertical escura marca onde o vídeo será dividido. Cada parte vira um vídeo separado, em um slide próprio.', dica: 'Para remover a divisão, passe o mouse sobre ela e clique no ✕.' },
+      dividir: { nome: 'Ponto de divisão', obrig: false, texto: 'A linha vertical escura marca onde o vídeo será dividido. Cada parte vira um vídeo separado, com legenda própria.', dica: 'Para remover a divisão, passe o mouse sobre ela e clique no ✕.' },
       btndividir: { nome: 'Dividir aqui', obrig: false, texto: 'Divide o vídeo no ponto da linha vermelha. Depois de aplicar, as partes aparecem na lista de itens e podem ser reordenadas junto com os prints.', dica: 'Útil para intercalar: vídeo de um passo, depois um print com destaque, depois o vídeo do passo seguinte.' },
       previa: { nome: 'Prévia', obrig: false, texto: 'Reproduz o vídeo já com as edições: começa no recorte, pula os trechos excluídos e para no fim.', exemplo: 'Atalho: Espaço (reproduzir / pausar)' },
       resumo: { nome: 'Resultado da edição', obrig: false, texto: 'Mostra como o vídeo vai ficar: a duração final e em quantos vídeos ele será dividido.' },
@@ -393,38 +477,74 @@ Então devo visualizar todas as alterações da reserva</textarea></div>
     }
   },
   {
-    id: 'resultado', nome: 'Resultado', titulo: 'O PowerPoint gerado',
-    sub: 'Todo cenário sai com a mesma estrutura, independentemente de quem testou ou do monitor usado.',
+    id: 'reexecutar', nome: 'Reexecutar', titulo: 'Reexecutar um cenário',
+    sub: 'Para refazer um cenário, digite o mesmo CT. Ao iniciar a captura, o app pergunta o que fazer com a execução anterior.',
     tela: () => `
-      <div class="slides">
-        <div class="slide-wrap"><span class="cap">Slide 1</span><div class="slide s1 alvo" data-k="s1"><span class="n"></span><img src="${LOGO}" alt="Craft"></div></div>
-        <div class="slide-wrap"><span class="cap">Slide 2</span><div class="slide s2">
-          <img class="logo-mini" src="${LOGO}" alt="">
-          <div class="alvo" data-k="s2titulo" style="padding:.2em;margin:-.2em"><span class="n"></span><div class="hist">QMS-1036 - CT01</div><div class="tit">Consulta de histórico do aéreo</div></div>
-          <div class="traco"></div>
-          <div class="cen alvo" data-k="s2cenario"><span class="n"></span><span class="kw">Dado que</span> estou logado como agente<br><span class="kw2">E</span> possuo uma reserva emitida<br><span class="kw">Quando</span> acesso o histórico do aéreo<br><span class="kw">Então</span> vejo as alterações da reserva</div>
-          <div class="info alvo" data-k="s2info"><span class="n"></span>
-            <div><small>História</small><u style="color:#0B63C9">QMS-1036</u></div><div><small>CT</small>CT01</div><div><small>Data</small>08/11 20:38</div><div><small>Responsável</small>Ana</div><div><small>Ambiente</small>Homolog.</div><div><small>Versão</small>2.14.0</div><div><small>Status</small><span class="ok">● Passou</span></div>
-          </div>
-        </div></div>
-        <div class="slide-wrap"><span class="cap">Slide 3 em diante</span><div class="slide s3 alvo" data-k="s3"><span class="n"></span>
-          <img class="logo-mini" src="${LOGO}" alt="">
-          <div class="cab"><b>Passo 1 de 2</b>&nbsp;&nbsp; QMS-1036 - CT01 - Consulta de histórico do aéreo</div>
-          <div class="print"><div class="linhas"><i></i><i></i><i></i><i></i><i></i></div><div class="destaque"></div></div>
-        </div></div>
-        <div class="slide-wrap"><span class="cap">Vídeo (se gravado)</span><div class="slide s3 alvo" data-k="video"><span class="n"></span>
-          <img class="logo-mini" src="${LOGO}" alt="">
-          <div class="cab"><b>Vídeo da execução</b>&nbsp;&nbsp; QMS-1036 - CT01</div>
-          <div class="print" style="background:#1F2D36;display:grid;place-items:center"><span style="color:#fff;font-size:2.4em">▶</span></div>
-        </div></div>
+      <div class="dialogo">
+        <div class="dlg-tit">Cenário já evidenciado</div>
+        <p><b>O CT03 já existe no relatório da QMS-1036.</b></p>
+        <p class="cinza">Última execução: 09/11/2026 10:41, Falhou.</p>
+        <div class="acoes" style="justify-content:flex-end">
+          <span class="btn prim alvo" data-k="nova"><span class="n"></span>Registrar nova execução</span>
+          <span class="btn alvo" data-k="substituir"><span class="n"></span>Substituir a última</span>
+          <span class="btn alvo" data-k="cancelar"><span class="n"></span>Cancelar</span>
+        </div>
       </div>`,
     campos: {
-      s1: { nome: 'Slide 1: capa', obrig: false, texto: 'Logo da Craft, igual em todas as evidências.' },
-      s2titulo: { nome: 'Slide 2: identificação', obrig: false, texto: 'ID da história e caso de teste em vermelho, com o título do teste logo abaixo.' },
-      s2cenario: { nome: 'Slide 2: cenário', obrig: false, texto: 'O cenário BDD que você escreveu, com as palavras-chave destacadas.' },
-      s2info: { nome: 'Slide 2: informações', obrig: false, texto: 'História (com link para o Jira), caso de teste, data e hora, responsável, ambiente, versão e status, numa linha só.', dica: 'A cor do status muda conforme o resultado: verde, vermelho, laranja ou cinza.' },
-      s3: { nome: 'Slides de prints', obrig: false, texto: 'Um print por slide, na ordem definida na revisão e com os destaques que você desenhou.', dica: 'O print se ajusta ao slide mantendo a proporção, seja de notebook, monitor comum ou ultrawide.' },
-      video: { nome: 'Slide de vídeo', obrig: false, texto: 'Se você gravou vídeo, ele fica embutido num slide próprio e toca direto no PowerPoint. Se você dividiu o vídeo, cada parte ganha um slide.' }
+      nova: { nome: 'Registrar nova execução', obrig: false, texto: 'Para retestes: o cenário falhou, foi corrigido e você testou de novo. Vira a 2ª execução. O relatório mostra só a mais recente, e as anteriores vão para o arquivo Histórico de execuções.', dica: 'O relatório de bug da execução anterior continua na pasta Bugs, como registro da falha.' },
+      substituir: { nome: 'Substituir a última', obrig: false, texto: 'Para quando a execução anterior saiu errada (print errado, faltou algo). Ela é apagada, com prints, vídeos e relatório de bug, e a nova fica no lugar. Não entra no histórico.', dica: 'Se a falha anterior foi real, use "Registrar nova execução" para não perder o registro.' },
+      cancelar: { nome: 'Cancelar', obrig: false, texto: 'Volta sem mudar nada. Use quando digitou o CT errado.' }
+    }
+  },
+  {
+    id: 'relatorio', nome: 'Relatório', titulo: 'O relatório da história',
+    sub: 'Um arquivo .html por história, atualizado a cada evidência. Abre em qualquer navegador e pode ser anexado no Jira.',
+    tela: () => `
+      <div class="rel">
+        <div class="rel-cab alvo" data-k="cabecalho"><span class="n"></span>
+          <img src="${LOGO}" alt=""><div><small>Relatório de evidências</small><h4>QMS-1036 <span>–</span> Consulta de histórico do aéreo</h4></div>
+          <div class="rel-meta"><span>Responsáveis <b>Ana, Bruno</b></span><span>Ambiente <b>Homologação</b></span><span><b>3</b> cenários · <i class="pt ok"></i>2 passou · <i class="pt erro"></i>1 falhou</span></div>
+        </div>
+        <div class="rel-busca alvo" data-k="busca"><span class="n"></span><span class="rel-campo">Pesquisar em cenários, BDD, endpoints, legendas…</span><span class="rel-f on">Todos</span><span class="rel-f">Front-end</span><span class="rel-f">Back-end</span><span class="rel-f on">Todos</span><span class="rel-f">Passou</span><span class="rel-f">Falhou</span></div>
+        <div class="rel-cen">
+          <div class="rel-tit"><b>CT02 – Endpoint de histórico do aéreo</b><span class="rel-st ok">Passou</span></div>
+          <div class="rel-bdd alvo" data-k="cenario"><span class="n"></span><span class="kw">Dado que</span> possuo um token válido<br><span class="kw">Quando</span> consulto GET /v1/history/aerial<br><span class="kw">Então</span> a API retorna 200 com os 3 eventos</div>
+          <div class="rel-curl alvo" data-k="curl"><span class="n"></span><span class="rel-copiar">Copiar</span>curl -X GET "https://api.craft.com/v1/history/aerial?localizador=LOC8F3K2" \<br>&nbsp;&nbsp;-H "Authorization: Bearer <em>{{TOKEN}}</em>"</div>
+          <div class="rel-evs">
+            <div class="alvo" data-k="prints"><span class="n"></span><div class="rel-img"></div><small><b>Passo 1</b> 200 OK com o evento EMITIDA</small></div>
+            <div class="alvo" data-k="video"><span class="n"></span><div class="rel-img video">▶</div><small><b>Vídeo</b> Fluxo completo <u>Baixar vídeo</u></small></div>
+          </div>
+        </div>
+        <div class="rel-rod alvo" data-k="historico"><span class="n"></span>Atualizado em 09/11/2026 às 19:15 · <u>Ver histórico de execuções</u></div>
+      </div>`,
+    campos: {
+      cabecalho: { nome: 'Cabeçalho', obrig: false, texto: 'História (com link para o Jira), título, responsáveis, período, ambiente, versão e o resumo: quantos cenários, quantos passaram e falharam, quantos de front e de back.' },
+      busca: { nome: 'Pesquisa e filtros', obrig: false, texto: 'A pesquisa procura em títulos, BDD, observações, cURL e legendas, e destaca o que encontrou. Os filtros mostram só front-end ou back-end, ou só um status.', exemplo: 'Atalho: / para ir direto à pesquisa' },
+      cenario: { nome: 'Cenário', obrig: false, texto: 'Cada CT traz o título, o status, o tipo, o responsável, a data, o BDD com as palavras-chave destacadas e, se houver, a observação.', dica: 'Cenários que falharam ganham o link "Relatório do bug".' },
+      curl: { nome: 'cURL', obrig: false, texto: 'Nos testes de back-end, a requisição com botão Copiar e, se anexada, a collection para baixar. Os dados sensíveis aparecem como variáveis.', exemplo: 'Antes de executar, substitua {{TOKEN}} pelos seus dados de acesso.' },
+      prints: { nome: 'Prints', obrig: false, texto: 'Clique para ampliar. Embaixo aparece em que ponto você está, como "CT02 · Passo 1 de 3", e as setas (ou ← →) passam para o próximo.' },
+      video: { nome: 'Vídeos', obrig: false, texto: 'Tocam no próprio relatório e têm o botão Baixar vídeo. O app guarda uma versão leve de cada vídeo para o relatório não ficar pesado.', dica: 'Um vídeo acima de 50 MB, ou um relatório acima de 100 MB, faz os vídeos virarem só download, e aí eles dependem da pasta da história.' },
+      historico: { nome: 'Histórico de execuções', obrig: false, texto: 'Se algum cenário foi reexecutado, o relatório mostra só a execução mais recente e traz o link para o arquivo com todas as execuções.' }
+    }
+  },
+  {
+    id: 'bug', nome: 'Relatório de bug', titulo: 'O relatório de bug',
+    sub: 'Todo cenário com status Falhou ou Bloqueado gera um relatório só dele, na pasta Bugs, pronto para anexar no bug.',
+    tela: () => `
+      <div class="rel">
+        <div class="rel-cab alvo" data-k="arquivo"><span class="n"></span><img src="${LOGO}" alt=""><div><small>Relatório para abertura de bug</small><h4>QMS-1036 <span>–</span> Consulta de histórico do aéreo</h4></div></div>
+        <div class="rel-cen">
+          <div class="rel-tit"><b>CT03 – Filtrar pelo localizador</b><span class="rel-st erro">Falhou</span></div>
+          <div class="rel-bdd alvo" data-k="passos"><span class="n"></span><span class="kw">Dado que</span> estou na tela de histórico do aéreo<br><span class="kw">Quando</span> filtro pelo localizador LOC8F3K2<br><span class="kw">Então</span> vejo os 3 eventos da reserva</div>
+          <div class="rel-obs alvo" data-k="obs"><span class="n"></span><b>Observação:</b> a lista volta vazia quando o período inclui o dia atual.</div>
+          <div class="rel-evs"><div class="alvo" data-k="evidencias"><span class="n"></span><div class="rel-img"></div><small><b>Passo 1</b> Lista vazia com o filtro aplicado</small></div><div><div class="rel-img video">▶</div><small><b>Vídeo</b> Reprodução</small></div></div>
+        </div>
+      </div>`,
+    campos: {
+      arquivo: { nome: 'Um arquivo por falha', obrig: false, texto: 'Fica em QMS-1036/Bugs, com o nome do CT e da execução. Prints e vídeo vão dentro do arquivo, então ele funciona sozinho anexado no Jira.', exemplo: 'QMS-1036 - CT03 - Bug (1ª execução).html' },
+      passos: { nome: 'Passos para reproduzir', obrig: false, texto: 'O BDD do cenário serve como passo a passo do bug: o contexto, a ação e o resultado esperado.' },
+      obs: { nome: 'Resultado obtido', obrig: false, texto: 'A observação que você escreveu na revisão. Descreva o que aconteceu de diferente do esperado.' },
+      evidencias: { nome: 'Evidências', obrig: false, texto: 'Os prints com destaques e o vídeo da execução que falhou. Em back-end, o cURL também aparece.', dica: 'Se o reteste falhar de novo, sai outro arquivo (2ª execução) e o primeiro continua na pasta.' }
     }
   }
 ];

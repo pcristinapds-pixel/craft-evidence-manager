@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório de evidências</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --tinta: #1F2D36; --texto: #374151; --cinza: #6B7280; --cinza-2: #9CA3AF; --linha: #E5E7EB;
+    --fundo: #F9FAFB; --bloco: #F3F4F6; --vermelho: #D31227; --ok: #047857; --ok-f: #ECFDF5;
+    --falha: #B91C1C; --falha-f: #FEF2F2; --bloq: #B45309; --bloq-f: #FFFBEB; --cod: #1A202C;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.6 'Inter', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--vermelho); outline-offset: 2px; }
+  mark { background: #FDE68A; color: inherit; border-radius: 2px; padding: 0 1px; }
+
+  .folha { max-width: 920px; margin: 32px auto; background: #fff; border: 1px solid var(--linha); border-radius: 8px; padding: 56px 64px; }
+
+  /* cabeçalho */
+  .cab { border-bottom: 1px solid var(--linha); padding-bottom: 28px; margin-bottom: 0; }
+  .cab .marca { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .cab .marca img { height: 44px; }
+  .cab .sobre { font-size: 12px; font-weight: 600; color: var(--vermelho); letter-spacing: .02em; }
+  .cab h1 { margin: 0; font-size: 28px; line-height: 1.2; color: var(--tinta); }
+  .cab h1 a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--linha); }
+  .cab h1 a:hover { border-color: var(--tinta); }
+  .meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; font-size: 14px; }
+  .meta span { display: block; font-size: 12px; color: var(--cinza-2); font-weight: 500; margin-bottom: 2px; }
+  .meta b { font-weight: 500; color: var(--tinta); }
+  .resumo { display: flex; gap: 22px; margin-top: 22px; font-size: 14px; color: var(--cinza); flex-wrap: wrap; }
+  .resumo b { color: var(--tinta); font-weight: 600; }
+  .ponto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+  /* barra de busca fixa */
+  .busca { position: sticky; top: 0; z-index: 20; background: #fff; margin: 0 -64px; padding: 14px 64px; border-bottom: 1px solid var(--linha); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .campo-busca { flex: 1 1 200px; position: relative; }
+  .campo-busca input:not(:placeholder-shown) ~ kbd { display: none; }
+  .campo-busca input { width: 100%; height: 40px; border: 1px solid var(--linha); border-radius: 6px; padding: 0 70px 0 36px; font: inherit; font-size: 14px; color: var(--tinta); background: var(--fundo); }
+  .campo-busca input:focus { outline: none; border-color: var(--cinza-2); background: #fff; }
+  .campo-busca svg { position: absolute; left: 11px; top: 12px; width: 16px; height: 16px; color: var(--cinza-2); }
+  .campo-busca kbd { position: absolute; right: 10px; top: 10px; font: 11px 'JetBrains Mono', monospace; color: var(--cinza-2); border: 1px solid var(--linha); border-radius: 4px; padding: 1px 6px; background: #fff; }
+  .filtros { display: flex; gap: 4px; flex-wrap: wrap; }
+  .filtros + .filtros { padding-left: 10px; border-left: 1px solid var(--linha); }
+  .filtro { height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--linha); background: #fff; color: var(--cinza); font-size: 13px; font-weight: 500; }
+  .filtro:hover { color: var(--tinta); }
+  .filtro.ativo { background: var(--tinta); border-color: var(--tinta); color: #fff; }
+  .contagem { width: 100%; font-size: 12px; color: var(--cinza-2); margin-top: -2px; }
+
+  /* sumário */
+  .sumario { margin: 28px 0 8px; }
+  .sumario h2, .sec-tit { font-size: 12px; font-weight: 600; color: var(--cinza); margin: 0 0 8px; }
+  .sumario ol { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--linha); }
+  .sumario li a { display: flex; gap: 12px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--linha); color: var(--tinta); text-decoration: none; font-size: 14px; }
+  .sumario li a:hover { color: var(--vermelho); }
+  .sumario .ct { font: 500 12px 'JetBrains Mono', monospace; color: var(--cinza); width: 44px; flex: none; }
+  .sumario .tit { flex: 1; }
+  .sumario .tipo { font-size: 12px; color: var(--cinza-2); }
+
+  /* cenários */
+  .cenario { padding: 48px 0 8px; border-top: 1px solid var(--linha); margin-top: 40px; }
+  .cenario:first-of-type { border-top: 0; margin-top: 8px; }
+  .cen-topo { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+  .cen-topo h2 { flex: 1; margin: 0; font-size: 20px; line-height: 1.35; color: var(--tinta); }
+  .status { flex: none; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 4px; margin-top: 3px; }
+  .s-passou { color: var(--ok); background: var(--ok-f); }
+  .s-falhou { color: var(--falha); background: var(--falha-f); }
+  .s-bloqueado { color: var(--bloq); background: var(--bloq-f); }
+  .s-nao-executado { color: var(--cinza); background: var(--bloco); }
+  .cen-meta { font-size: 13px; color: var(--cinza); margin-bottom: 18px; }
+  .cen-meta span + span::before { content: "/"; margin: 0 8px; color: var(--linha); }
+
+  .bdd { background: var(--bloco); border-left: 3px solid var(--linha); border-radius: 0 4px 4px 0; padding: 14px 18px; font-size: 15px; line-height: 1.7; color: var(--texto); margin-bottom: 22px; }
+  .kw { color: var(--vermelho); font-weight: 700; }
+  .kw2 { color: var(--cinza); font-weight: 700; }
+  .bdd code, .obs code { font: 13px 'JetBrains Mono', monospace; background: #fff; border: 1px solid var(--linha); border-radius: 4px; padding: 1px 5px; color: var(--vermelho); }
+
+  .obs { border: 1px solid #FECACA; background: var(--falha-f); border-radius: 6px; padding: 10px 14px; font-size: 14px; margin-bottom: 22px; color: var(--falha); }
+  .obs b { font-weight: 600; }
+
+  .sec-cab { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--bloco); padding-bottom: 4px; margin: 22px 0 12px; }
+  .sec-cab .sec-tit { margin: 0; }
+  .link-acao { background: none; border: 0; padding: 0; font-size: 12px; font-weight: 500; color: var(--tinta); display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+  .link-acao:hover { color: var(--vermelho); }
+  .link-acao svg { width: 14px; height: 14px; }
+
+  /* código */
+  .codigo { position: relative; background: var(--cod); border-radius: 6px; overflow: hidden; }
+  .codigo pre { margin: 0; padding: 16px 18px; font: 13px/1.65 'JetBrains Mono', Consolas, monospace; color: #D1D5DB; white-space: pre-wrap; word-break: break-word; }
+  .codigo .copiar { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); border: 0; border-radius: 4px; padding: 4px 9px; font-size: 12px; opacity: 0; transition: opacity .15s; }
+  .codigo:hover .copiar, .codigo .copiar:focus-visible { opacity: 1; }
+  .codigo .k { color: #93C5FD; } .codigo .s { color: #86EFAC; } .codigo .n { color: #FCD34D; } .codigo .f { color: #F9A8D4; }
+  .codigo .var { color: #FCA5A5; font-weight: 500; }
+  .nota { font-size: 13px; color: var(--cinza); margin: 8px 0 0; }
+  .nota code { font: 12px 'JetBrains Mono', monospace; background: var(--bloco); border-radius: 3px; padding: 1px 5px; color: var(--tinta); }
+  .codigo .alvo { background: rgba(211,18,39,.35); outline: 1px solid #F87171; border-radius: 2px; }
+  .resp-cab { display: flex; gap: 14px; align-items: center; font-size: 13px; color: var(--cinza); }
+  .http { font-weight: 600; }
+  .http { color: var(--tinta); }
+
+  /* prints e vídeo */
+  .grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .ev { margin: 0; }
+  .ev button { display: block; width: 100%; padding: 0; border: 1px solid var(--linha); border-radius: 4px; overflow: hidden; background: var(--bloco); aspect-ratio: 16/9; cursor: zoom-in; }
+  .ev button:hover { opacity: .92; }
+  .ev img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .ev video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 4px; display: block; }
+  .cap-video { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .video-arq { aspect-ratio: 16/9; border: 1px solid var(--linha, #e5e7eb); border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--cinza-2, #6b7280); font-size: 13px; }
+  .link-acao.baixar svg { width: 14px; height: 14px; }
+  .ev figcaption { font-size: 13px; color: var(--cinza); margin-top: 6px; }
+  .ev figcaption b { color: var(--tinta); font-weight: 600; }
+
+  .hist { margin-top: 26px; border: 1px solid var(--linha); border-radius: 6px; }
+  .hist summary { cursor: pointer; padding: 10px 14px; font-size: 13px; font-weight: 500; color: var(--tinta); list-style: none; display: flex; gap: 8px; align-items: center; }
+  .hist summary::-webkit-details-marker { display: none; }
+  .hist summary::before { content: "▸"; color: var(--cinza-2); transition: transform .15s; }
+  .hist[open] summary::before { transform: rotate(90deg); }
+  .hist .exec { border-top: 1px solid var(--linha); padding: 14px; }
+  .hist .exec-cab { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--cinza); margin-bottom: 10px; flex-wrap: wrap; }
+  .hist .exec-cab b { color: var(--tinta); font-weight: 600; }
+  .hist .grade { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .hist .obs { margin-bottom: 12px; }
+  .exec-tag { font-size: 12px; color: var(--cinza); }
+  .vazio { text-align: center; padding: 60px 0; color: var(--cinza); display: none; }
+  .rodape { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--linha); font-size: 12px; color: var(--cinza-2); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .oculto { display: none !important; }
+  /* textos longos sem espaço (legendas, BDD, observação) quebram dentro da página */
+  .folha, .folha * { overflow-wrap: anywhere; }
+  .grade > *, .cenario, .ev { min-width: 0; }
+
+  /* lightbox */
+  .lb { position: fixed; inset: 0; z-index: 50; background: #0C0E11; display: flex; align-items: center; justify-content: center; padding: 56px 72px; }
+  .lb img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+  .lb .leg { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 160px); text-align: center; color: #fff; font-size: 13px; background: rgba(0,0,0,.6); padding: 6px 12px; border-radius: 6px; }
+  .lb button { position: absolute; background: rgba(255,255,255,.08); color: #fff; border: 0; border-radius: 50%; width: 44px; height: 44px; font-size: 20px; }
+  .lb button:hover { background: rgba(255,255,255,.18); }
+  .lb .fechar { top: 16px; right: 16px; }
+  .lb .ant { left: 16px; top: 50%; transform: translateY(-50%); }
+  .lb .prox { right: 16px; top: 50%; transform: translateY(-50%); }
+
+  @media (max-width: 760px) {
+    .folha { margin: 0; border: 0; border-radius: 0; padding: 32px 20px; }
+    .busca { margin: 0 -20px; padding: 12px 20px; }
+    .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grade { grid-template-columns: 1fr; }
+    .lb { padding: 56px 8px; }
+  }
+  @media print {
+    body { background: #fff; }
+    .folha { border: 0; margin: 0; padding: 0; max-width: none; }
+    .busca, .copiar, .link-acao { display: none !important; }
+    .cenario { break-inside: avoid-page; }
+    .codigo { background: #F3F4F6; } .codigo pre { color: #111; }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="folha">
+  <header class="cab">
+    <div class="marca">
+      <img src="__LOGO__" alt="Craft">
+      <div>
+        <div class="sobre" id="sobre">Relatório de evidências</div>
+        <h1 id="titulo"></h1>
+      </div>
+    </div>
+    <div class="meta" id="meta"></div>
+    <div class="resumo" id="resumo"></div>
+  </header>
+
+  <div class="busca" role="search">
+    <label class="campo-busca">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Pesquisar em cenários, BDD, endpoints, legendas…" aria-label="Pesquisar no relatório">
+      <kbd>/</kbd>
+    </label>
+    <div class="filtros" id="fTipo">
+      <button class="filtro ativo" data-v="">Todos</button>
+      <button class="filtro" data-v="front">Front-end</button>
+      <button class="filtro" data-v="back">Back-end</button>
+    </div>
+    <div class="filtros" id="fStatus"></div>
+    <div class="contagem" id="contagem" aria-live="polite"></div>
+  </div>
+
+  <nav class="sumario" aria-label="Cenários">
+    <h2>Cenários</h2>
+    <ol id="sumario"></ol>
+  </nav>
+
+  <div id="cenarios"></div>
+  <div class="vazio" id="vazio">Nenhum cenário encontrado para essa pesquisa.</div>
+
+  <footer class="rodape">
+    <span id="gerado"></span>
+    <span>Craft Evidence Manager</span>
+  </footer>
+</main>
+
+<div class="lb oculto" id="lb" role="dialog" aria-modal="true" aria-label="Evidência ampliada">
+  <img id="lbImg" alt="">
+  <div class="leg" id="lbLeg"></div>
+  <button class="fechar" id="lbFechar" aria-label="Fechar">✕</button>
+  <button class="ant" id="lbAnt" aria-label="Anterior">‹</button>
+  <button class="prox" id="lbProx" aria-label="Próxima">›</button>
+</div>
+
+<!-- Os dados abaixo são preenchidos pelo app a cada evidência gerada -->
+<script id="dados" type="application/json">__DADOS__</script>
+
+<script>
+const D = JSON.parse(document.getElementById('dados').textContent);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const slug = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-');
+const STATUS = { 'Passou': 's-passou', 'Falhou': 's-falhou', 'Bloqueado': 's-bloqueado', 'Não executado': 's-nao-executado' };
+const COR = { 'Passou': 'var(--ok)', 'Falhou': 'var(--falha)', 'Bloqueado': 'var(--bloq)', 'Não executado': 'var(--cinza-2)' };
+
+// ---------- cabeçalho ----------
+const DOC = D.documento || 'Relatório de evidências';
+document.title = `${D.historia.id} – ${DOC}`;
+$('sobre').textContent = DOC;
+const link = D.historia.link ? `<a href="${esc(D.historia.link)}" target="_blank" rel="noopener">${esc(D.historia.id)}</a>` : esc(D.historia.id);
+$('titulo').innerHTML = link + (D.historia.titulo ? ` <span style="font-weight:400;color:var(--cinza-2)">–</span> ${esc(D.historia.titulo)}` : '');
+$('fStatus').innerHTML = '<button class="filtro ativo" data-v="">Todos</button>' +
+  ['Passou', 'Falhou', 'Bloqueado', 'Não executado'].filter(s => D.cenarios.some(c => c.status === s)).map(s => `<button class="filtro" data-v="${s}">${s}</button>`).join('');
+if (!D.cenarios.some(c => c.tipo === 'back') || !D.cenarios.some(c => c.tipo !== 'back')) $('fTipo').classList.add('oculto');
+$('meta').innerHTML = [[D.responsaveis.length > 1 ? 'Responsáveis' : 'Responsável', D.responsaveis.join(', ')], ['Período', D.periodo], ['Ambiente', D.ambiente], ['Versão', D.versao]]
+  .map(([r, v]) => `<div><span>${r}</span><b>${esc(v)}</b></div>`).join('');
+const cont = s => D.cenarios.filter(c => c.status === s).length;
+$('resumo').innerHTML = `<span><b>${D.cenarios.length}</b> ${D.rotuloItens || 'cenários'}</span>` +
+  ['Passou', 'Falhou', 'Bloqueado', 'Não executado'].filter(cont).map(s => `<span><i class="ponto" style="background:${COR[s]}"></i><b>${cont(s)}</b> ${s.toLowerCase()}</span>`).join('') +
+  [['front', 'front-end'], ['back', 'back-end']].map(([t, n]) => { const q = D.cenarios.filter(c => (c.tipo === 'back' ? 'back' : 'front') === t).length; return q ? `<span><b>${q}</b> ${n}</span>` : ''; }).join('');
+$('gerado').textContent = (D.simples ? 'Gerado em ' : 'Atualizado em ') + D.atualizadoEm;
+if (D.simples) ['resumo'].forEach(id => $(id).classList.add('oculto'));
+if (D.simples) document.querySelectorAll('.busca, .sumario').forEach(el => el.classList.add('oculto'));
+if (D.linkHistorico) $('gerado').insertAdjacentHTML('afterend', ` <a class="link-acao" style="display:inline" href="${esc(D.linkHistorico)}">Ver histórico de execuções</a>`);
+
+// ---------- formatação ----------
+function bdd(t) {
+  return esc(t).split('\n').map(l => l
+    .replace(/^(\s*)(Dado que|Dado|Quando|Então|Cenário:)/, '$1<span class="kw">$2</span>')
+    .replace(/^(\s*)(E|Mas)(\s)/, '$1<span class="kw2">$2</span>$3')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')).join('<br>');
+}
+function realceCurl(txt) {
+  return esc(txt).replace(/(\{\{[A-Z_0-9]+\}\})/g, '<span class="var">$1</span>');
+}
+function realceJson(txt, alvo) {
+  // um token por vez: textos, números e literais (não quebra horários como "10:12")
+  const re = /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\b\d+(?:\.\d+)?\b)|\b(true|false|null)\b/g;
+  return txt.split('\n').map(l => {
+    let h = '', i = 0, m;
+    while ((m = re.exec(l))) {
+      h += esc(l.slice(i, m.index));
+      if (m[1]) h += `<span class="${m[2] ? 'k' : 's'}">${esc(m[1])}</span>${m[2] || ''}`;
+      else if (m[3]) h += `<span class="n">${m[3]}</span>`;
+      else h += `<span class="f">${m[4]}</span>`;
+      i = re.lastIndex;
+    }
+    h += esc(l.slice(i));
+    if (alvo && l.includes(alvo)) {
+      const ind = h.match(/^\s*/)[0];
+      return ind + `<span class="alvo">${h.slice(ind.length)}</span>`;
+    }
+    return h;
+  }).join('\n');
+}
+const icoDown = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1M8 12l4 4 4-4M12 4v12"/></svg>';
+
+// ---------- cenários ----------
+const galeria = [];
+const videos = [];
+// vídeos embutidos viram Blob (bem mais leve para o navegador do que um data URL gigante no src)
+const blobs = {};
+function urlVideo(e, i) {
+  if (!e.src.startsWith('data:')) return e.src;
+  if (!blobs[i]) {
+    const b64 = e.src.slice(e.src.indexOf(',') + 1);
+    const bin = atob(b64), buf = new Uint8Array(bin.length);
+    for (let k = 0; k < bin.length; k++) buf[k] = bin.charCodeAt(k);
+    blobs[i] = URL.createObjectURL(new Blob([buf], { type: 'video/mp4' }));
+  }
+  return blobs[i];
+}
+// carrega cada vídeo só quando ele chega perto da tela
+// baixar vídeo embutido: gera o arquivo a partir do próprio relatório
+document.addEventListener('click', ev => {
+  const a = ev.target.closest('a[data-baixar]');
+  if (!a) return;
+  const e = videos[+a.dataset.baixar];
+  if (!e.embutido) return;
+  ev.preventDefault();
+  const t = document.createElement('a');
+  t.href = urlVideo(e, +a.dataset.baixar); t.download = e.nomeDownload || 'video.mp4';
+  document.body.appendChild(t); t.click(); t.remove();
+});
+function ligarVideos() {
+  const carregar = el => { if (!el.src) el.src = urlVideo(videos[+el.dataset.v], +el.dataset.v); };
+  const els = document.querySelectorAll('video[data-v]');
+  if (!('IntersectionObserver' in window)) return els.forEach(carregar);
+  const io = new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) { carregar(en.target); io.unobserve(en.target); } }), { rootMargin: '600px' });
+  els.forEach(el => io.observe(el));
+}
+function grade(evs, rotulo) {
+  if (!evs.length) return '';
+  const totalPrints = evs.filter(e => e.tipo !== 'video').length;
+  return `<div class="grade">` + evs.map(e => {
+    if (e.tipo === 'video') {
+      const v = videos.push(e) - 1;
+      const baixar = `<a class="link-acao baixar" data-baixar="${v}" href="${e.embutido ? '#' : esc(e.arquivo)}"${e.embutido ? '' : ' target="_blank" rel="noopener"'} download="${esc(e.nomeDownload || 'video.mp4')}">${icoDown}Baixar vídeo</a>`;
+      if (!e.embutido) return `<figure class="ev"><div class="video-arq"><span>Vídeo${e.duracao ? ' · ' + esc(e.duracao) : ''}</span>${baixar}</div><figcaption><b>Vídeo</b> ${esc(e.legenda || '')}</figcaption></figure>`;
+      return `<figure class="ev"><video data-v="${v}" controls preload="metadata"></video><figcaption class="cap-video"><span><b>Vídeo</b> ${esc(e.legenda || '')}</span>${baixar}</figcaption></figure>`;
+    }
+    const i = galeria.push({ src: e.src, leg: `${rotulo} · Passo ${e.passo} de ${totalPrints}` + (e.legenda ? ` — ${e.legenda}` : '') }) - 1;
+    return `<figure class="ev"><button data-lb="${i}" aria-label="Ampliar: ${esc(e.legenda)}"><img src="${e.src}" alt="${esc(e.legenda)}" loading="lazy"></button><figcaption><b>Passo ${e.passo}</b> ${esc(e.legenda || '')}</figcaption></figure>`;
+  }).join('') + `</div>`;
+}
+function render() {
+  $('sumario').innerHTML = D.cenarios.map(c =>
+    `<li data-id="${c.id || c.ct}"><a href="#${slug(c.id || c.ct)}"><span class="ct">${esc(c.ct)}</span><span class="tit">${esc(c.titulo)}</span><span class="tipo">${c.tipo === 'back' ? 'Back-end' : 'Front-end'}</span><i class="ponto" style="background:${COR[c.status]}" title="${esc(c.status)}"></i></a></li>`).join('');
+
+  $('cenarios').innerHTML = D.cenarios.map(c => {
+    let h = `<section class="cenario" id="${slug(c.id || c.ct)}" data-id="${c.id || c.ct}">
+      <div class="cen-topo"><h2>${esc(c.ct)} – ${esc(c.titulo)}</h2><span class="status ${STATUS[c.status] || 's-nao-executado'}">${esc(c.status)}</span></div>
+      <div class="cen-meta"><span>${c.tipo === 'back' ? 'Back-end' : 'Front-end'}</span><span>${esc(c.responsavel)}</span><span>${esc(c.data)}</span>${c.execucao > 1 ? `<span>${c.execucao}ª execução</span>` : ''}${c.linkBug ? `<span><a class="link-acao" style="display:inline" href="${esc(c.linkBug)}">Relatório do bug</a></span>` : ''}</div>
+      <div class="bdd">${bdd(c.bdd)}</div>`;
+    if (c.observacao) h += `<div class="obs"><b>Observação:</b> ${esc(c.observacao)}</div>`;
+    if (c.api && (c.api.curl || c.api.collection)) {
+      const a = c.api;
+      const vars = [...new Set((a.curl || '').match(/\{\{[A-Z_0-9]+\}\}/g) || [])];
+      h += `<div class="sec-cab"><h3 class="sec-tit">Requisição (cURL)</h3>${a.collection ? `<a class="link-acao" href="${a.collection.url}" download="${esc(a.collection.nome)}">${icoDown}Baixar collection</a>` : ''}</div>
+        ${a.curl ? `<div class="codigo"><button class="copiar" data-copiar>Copiar</button><pre>${realceCurl(a.curl)}</pre></div>` : ''}
+        ${vars.length ? `<p class="nota">Antes de executar, substitua ${vars.map(v => `<code>${esc(v)}</code>`).join(', ')} pelos seus dados de acesso.</p>` : ''}`;
+    }
+    if (c.evidencias && c.evidencias.length) h += `<div class="sec-cab"><h3 class="sec-tit">Evidências</h3></div>` + grade(c.evidencias, c.ct);
+    if (c.historico && c.historico.length) {
+      const total = c.historico.length + 1;
+      h += `<details class="hist"><summary>Histórico de execuções (${total})</summary>
+        <div class="exec"><div class="exec-cab"><b>${total}ª execução</b><span>${esc(c.data)}</span><span class="status ${STATUS[c.status]}">${esc(c.status)}</span><span class="exec-tag">atual, exibida acima</span></div></div>` +
+        [...c.historico].reverse().map(x => `<div class="exec"><div class="exec-cab"><b>${x.execucao}ª execução</b><span>${esc(x.data)}</span><span>${esc(x.responsavel || '')}</span><span class="status ${STATUS[x.status]}">${esc(x.status)}</span></div>
+          ${x.observacao ? `<div class="obs"><b>Observação:</b> ${esc(x.observacao)}</div>` : ''}${grade(x.evidencias || [], `${c.ct} (${x.execucao}ª execução)`)}</div>`).join('') + `</details>`;
+    }
+    return h + `</section>`;
+  }).join('');
+
+  // texto pesquisável de cada cenário (inclui cURL, resposta e legendas)
+  D.cenarios.forEach(c => {
+    c._busca = [c.ct, c.titulo, c.status, c.tipo === 'back' ? 'back-end backend api' : 'front-end frontend tela', c.responsavel, c.data, c.bdd, c.observacao,
+      c.api && c.api.curl, ...(c.evidencias || []).map(e => e.legenda),
+      ...(c.historico || []).flatMap(x => [x.status, x.observacao, x.data, ...(x.evidencias || []).map(e => e.legenda)])].join(' \n ').toLowerCase();
+  });
+}
+render();
+ligarVideos();
+const originais = new Map();
+document.querySelectorAll('.cenario .bdd, .cenario h2, .cenario .obs, .cenario pre, .cenario figcaption').forEach(el => originais.set(el, el.innerHTML));
+
+// ---------- busca e filtros ----------
+let fTipo = '', fStatus = '';
+function marcar(el, termo) {
+  const orig = originais.get(el);
+  if (!termo) { el.innerHTML = orig; return; }
+  const re = new RegExp('(' + termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  el.innerHTML = orig.split(/(<[^>]+>)/).map(p => p.startsWith('<') ? p : p.replace(re, '<mark>$1</mark>')).join('');
+}
+function filtrar() {
+  const termo = $('q').value.trim();
+  const t = termo.toLowerCase();
+  let n = 0;
+  D.cenarios.forEach(c => {
+    const ok = (!t || c._busca.includes(t)) && (!fTipo || c.tipo === fTipo) && (!fStatus || c.status === fStatus);
+    document.querySelectorAll(`[data-id="${c.id || c.ct}"]`).forEach(el => el.classList.toggle('oculto', !ok));
+    if (ok) n++;
+  });
+  originais.forEach((_, el) => marcar(el, termo));
+  $('contagem').textContent = (t || fTipo || fStatus) ? `${n} de ${D.cenarios.length} cenários` : '';
+  $('vazio').style.display = n ? 'none' : 'block';
+}
+$('q').addEventListener('input', filtrar);
+[['fTipo', v => fTipo = v], ['fStatus', v => fStatus = v]].forEach(([id, set]) =>
+  $(id).querySelectorAll('.filtro').forEach(b => b.onclick = () => {
+    $(id).querySelectorAll('.filtro').forEach(x => x.classList.toggle('ativo', x === b));
+    set(b.dataset.v); filtrar();
+  }));
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== $('q')) { e.preventDefault(); $('q').focus(); }
+  if (e.key === 'Escape' && document.activeElement === $('q')) { $('q').value = ''; filtrar(); }
+});
+
+// ---------- copiar ----------
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-copiar]');
+  if (!b) return;
+  const txt = b.nextElementSibling.innerText;
+  try { await navigator.clipboard.writeText(txt); b.textContent = 'Copiado'; }
+  catch { const r = document.createRange(); r.selectNodeContents(b.nextElementSibling); getSelection().removeAllRanges(); getSelection().addRange(r); b.textContent = 'Selecionado: Ctrl+C'; }
+  setTimeout(() => b.textContent = 'Copiar', 1800);
+});
+
+// ---------- lightbox ----------
+let atual = 0;
+function abrir(i) { atual = (i + galeria.length) % galeria.length; $('lbImg').src = galeria[atual].src; $('lbLeg').textContent = galeria[atual].leg; $('lb').classList.remove('oculto'); document.body.style.overflow = 'hidden'; $('lbFechar').focus(); }
+function fechar() { $('lb').classList.add('oculto'); document.body.style.overflow = ''; }
+document.addEventListener('click', e => { const b = e.target.closest('[data-lb]'); if (b) abrir(+b.dataset.lb); });
+$('lb').addEventListener('click', e => { if (e.target === $('lb')) fechar(); });
+$('lbFechar').onclick = fechar; $('lbAnt').onclick = () => abrir(atual - 1); $('lbProx').onclick = () => abrir(atual + 1);
+document.addEventListener('keydown', e => {
+  if ($('lb').classList.contains('oculto')) return;
+  if (e.key === 'Escape') fechar();
+  if (e.key === 'ArrowRight') abrir(atual + 1);
+  if (e.key === 'ArrowLeft') abrir(atual - 1);
+});
+</script>
+</body>
+</html>

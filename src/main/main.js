@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, desktopCapturer, shell, dialog, screen } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, desktopCapturer, shell, dialog, screen, nativeImage } = require('electron');
 const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
@@ -6,6 +6,8 @@ const os = require('os');
 const Store = require('electron-store');
 const { generatePPTX } = require('./ppt-builder');
 const video = require('./video-tools');
+const evidencias = require('./evidence-store');
+const { gerarRelatorio, gerarRelatorioBug, ehBug, nomeBug } = require('./report-builder');
 
 const store = new Store();
 
@@ -260,6 +262,108 @@ ipcMain.handle('edit-video', async (event, { filePath, partes }) => {
 });
 
 ipcMain.handle('video-available', () => video.disponivel());
+
+// Anexar prints ou vídeos que já existem no computador (feitos fora do app)
+ipcMain.handle('attach-files', async () => {
+  const r = await dialog.showOpenDialog(mainWindow, {
+    title: 'Anexar print ou vídeo',
+    filters: [
+      { name: 'Imagens e vídeos', extensions: ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp', 'mp4', 'webm', 'mov', 'mkv', 'avi'] },
+      { name: 'Imagens', extensions: ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp'] },
+      { name: 'Vídeos', extensions: ['mp4', 'webm', 'mov', 'mkv', 'avi'] }
+    ],
+    properties: ['openFile', 'multiSelections']
+  });
+  if (r.canceled) return [];
+  ensureTempDir();
+  const itens = [];
+  for (const arq of r.filePaths) {
+    const ext = path.extname(arq).slice(1).toLowerCase();
+    try {
+      if (['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp'].includes(ext)) {
+        const img = nativeImage.createFromPath(arq);
+        if (img.isEmpty()) throw new Error('imagem inválida');
+        const { width, height } = img.getSize();
+        itens.push({ type: 'image', dataUrl: img.toDataURL(), width, height, nome: path.basename(arq) });
+      } else {
+        // copia para a pasta temporária e padroniza em MP4, igual à gravação do app
+        const copia = path.join(tempDir, `anexo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`);
+        fs.copyFileSync(arq, copia);
+        let v = { filePath: copia, editavel: false };
+        if (video.disponivel()) {
+          try { v = { ...(await video.padronizar(copia, tempDir)), editavel: true }; fs.rm(copia, () => {}); } catch (e) { console.error(e); }
+        }
+        itens.push({ type: 'video', ...v, fileUrl: pathToFileURL(v.filePath).href, nome: path.basename(arq) });
+      }
+    } catch (e) {
+      itens.push({ type: 'erro', nome: path.basename(arq), erro: e.message });
+    }
+  }
+  return itens;
+});
+
+// ---------------- Relatório one-page e testes de back-end ----------------
+const pastaEvidencias = () => store.get('savePath') || app.getPath('documents');
+const LOGO = path.join(__dirname, '../../assets/logo.png');
+
+// Escolher arquivo de collection (Postman/Insomnia)
+ipcMain.handle('collection-pick', async () => {
+  const r = await dialog.showOpenDialog(mainWindow, { title: 'Anexar collection', filters: [{ name: 'Collection', extensions: ['json'] }], properties: ['openFile'] });
+  if (r.canceled || !r.filePaths[0]) return null;
+  return { path: r.filePaths[0], nome: path.basename(r.filePaths[0]) };
+});
+
+// Informações da última execução de um cenário (para reexecução)
+ipcMain.handle('historia-info', (event, storyId) => evidencias.infoHistoria(pastaEvidencias(), storyId));
+ipcMain.handle('cenario-info', (event, { storyId, ct }) => {
+  if (!storyId || !ct) return null;
+  return evidencias.ultimaExecucao(pastaEvidencias(), storyId, ct);
+});
+
+// Pergunta com botões (retorna o índice escolhido)
+ipcMain.handle('ask', async (event, { titulo, mensagem, detalhe, botoes, cancelar = botoes.length - 1 }) => {
+  const r = await dialog.showMessageBox(mainWindow, { type: 'question', title: titulo, message: mensagem, detail: detalhe, buttons: botoes, defaultId: 0, cancelId: cancelar, noLink: true });
+  return r.response;
+});
+
+ipcMain.handle('open-path', (event, p) => shell.openPath(p));
+ipcMain.handle('show-item', (event, p) => shell.showItemInFolder(p));
+
+// Salva a execução do cenário e gera o relatório da história e/ou o PPT
+ipcMain.handle('generate-evidence', async (event, { dados, modo, saidas }) => {
+  try {
+    const base = pastaEvidencias();
+    const salvo = evidencias.salvarExecucao(base, dados, modo);
+    const out = { success: true, pasta: salvo.pastaHistoria, execucao: salvo.execucao };
+    const bug = ehBug(dados.status);
+    const jpeg = arq => 'data:image/jpeg;base64,' + nativeImage.createFromPath(arq).toJPEG(85).toString('base64');
+    // versão leve dos vídeos (sempre: o relatório pode ser gerado depois, por outro CT)
+    if (video.disponivel()) {
+      for (const v of salvo.videos) {
+        try { await video.compactar(v.original, v.relatorio); } catch (e) { console.error(e); }
+      }
+    }
+    // ao substituir uma execução, o relatório de bug dela deixa de valer
+    if (modo === 'substituir') {
+      const antigo = path.join(salvo.pastaHistoria, 'Bugs', nomeBug(dados.storyId, dados.testCaseId, salvo.execucao));
+      fs.rmSync(antigo, { force: true });
+    }
+    // cenário que não passou: relatório sozinho para anexar no bug
+    // (gerado antes do relatório da história, que aponta para ele)
+    if (bug) out.bug = gerarRelatorioBug(base, dados.storyId, dados.testCaseId, { jiraBaseUrl: dados.jiraBaseUrl, logoPath: LOGO, imagemParaDataUrl: jpeg });
+    if (saidas.relatorio) {
+      out.relatorio = gerarRelatorio(base, dados.storyId, {
+        jiraBaseUrl: dados.jiraBaseUrl, logoPath: LOGO, out,
+        imagemParaDataUrl: jpeg // prints entram como JPEG (bem mais leve que PNG)
+      });
+    }
+    if (saidas.ppt) out.ppt = await generatePPTX(dados, salvo.pastaHistoria, LOGO);
+    return out;
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: error.message };
+  }
+});
 
 ipcMain.handle('generate-pptx', async (event, data) => {
   try {

@@ -10,6 +10,9 @@ let videoSaving = Promise.resolve();
 let isPaused = false;
 let pausedTotal = 0;   // ms pausados (não contam no cronômetro)
 let pausedAt = 0;
+let tipoTeste = 'front';        // 'front' | 'back'
+let collectionPath = null;      // collection anexada (back-end)
+let modoExecucao = 'nova';      // 'nova' | 'substituir' quando o CT já existe
 
 const screenSetup = document.getElementById('screenSetup');
 const screenReview = document.getElementById('screenReview');
@@ -125,11 +128,113 @@ async function iniciarSessao() {
 }
 
 // 2. Iniciar Sessão com Alertas Nativos
-document.getElementById('btnStartCapture').addEventListener('click', () => {
+const val = id => document.getElementById(id).value.trim();
+
+function validarCaso() {
+  if (!val('storyId')) { window.api.showError('Campo Obrigatório', 'Informe o ID da História antes de continuar.'); return false; }
+  if (!val('testCaseId')) { window.api.showError('Campo Obrigatório', 'Informe o Caso de Teste antes de continuar.'); return false; }
+  if (!val('testTitle')) { window.api.showError('Campo Obrigatório', 'Informe o Título do Teste antes de continuar.'); return false; }
+  if (!val('bddText')) { window.api.showError('Campo Obrigatório', 'Descreva o cenário em BDD (Dado que / Quando / Então) antes de continuar.'); return false; }
+  const erroBdd = validarBdd(val('bddText'));
+  if (erroBdd) { window.api.showError('Cenário BDD incompleto', erroBdd); return false; }
+  return true;
+}
+
+
+// Se o CT já existe na história, pergunta se é uma nova execução ou se substitui a última
+async function confirmarReexecucao() {
+  if (evidences.length) return true; // já está no meio deste cenário ("Capturar mais")
+  modoExecucao = 'nova';
+  const info = await window.api.cenarioInfo(val('storyId'), val('testCaseId'));
+  if (!info) return true;
+  const escolha = await window.api.ask({
+    titulo: 'Cenário já evidenciado',
+    mensagem: `O ${val('testCaseId')} já existe no relatório da ${val('storyId')}.`,
+    detalhe: `Última execução: ${info.data}, ${info.status}` + (info.total > 1 ? ` (${info.total} execuções até agora)` : '') +
+      `.\n\n"Registrar nova execução" mantém as anteriores no histórico do relatório.\n"Substituir a última" descarta a execução de ${info.data}.`,
+    botoes: ['Registrar nova execução', 'Substituir a última', 'Cancelar'],
+    cancelar: 2
+  });
+  if (escolha === 2) return false;
+  modoExecucao = escolha === 1 ? 'substituir' : 'nova';
+  return true;
+}
+
+document.getElementById('btnStartCapture').addEventListener('click', async () => {
+  if (!validarCaso()) return;
   if (!selectedSourceId) return window.api.showError('Seleção Obrigatória', 'Selecione uma tela na lista de capturas.');
-  if (!document.getElementById('storyId').value) return window.api.showError('Campo Obrigatório', 'Informe o ID da História antes de continuar.');
-  if (!document.getElementById('testTitle').value) return window.api.showError('Campo Obrigatório', 'Informe o Título do Teste antes de continuar.');
+  if (!(await confirmarReexecucao())) return;
   iniciarSessao();
+});
+
+// Back-end sem prints: vai direto para a revisão
+document.getElementById('btnReviewNoCapture').addEventListener('click', async () => {
+  if (!validarCaso()) return;
+  if (!val('apiCurl')) return window.api.showError('Campo Obrigatório', 'Cole o cURL da requisição ou capture ao menos um print.');
+  if (!(await confirmarReexecucao())) return;
+  showReviewScreen();
+});
+
+// Tipo de teste: front-end / back-end
+function definirTipo(t) {
+  tipoTeste = t === 'back' ? 'back' : 'front';
+  document.querySelectorAll('#tipoTeste button').forEach(b => b.classList.toggle('ativo', b.dataset.v === tipoTeste));
+  const back = tipoTeste === 'back';
+  document.getElementById('cardApi').classList.toggle('hidden', !back);
+  document.getElementById('btnReviewNoCapture').classList.toggle('hidden', !back || evidences.length > 0);
+  document.getElementById('dicaCapturaBack').classList.toggle('hidden', !back);
+  document.getElementById('tituloCaptura').textContent = back ? 'Print do sucesso (tela ou janela para captura)' : 'Selecione a Tela ou Janela para Captura';
+  document.getElementById('btnStartCapture').textContent = back ? 'Capturar prints' : 'Iniciar captura';
+}
+document.querySelectorAll('#tipoTeste button').forEach(b => b.onclick = () => definirTipo(b.dataset.v));
+
+// Collection (opcional)
+function mostrarCollection(nome) {
+  const el = document.getElementById('collectionNome');
+  if (nome) el.textContent = '📎 ' + nome;
+  else el.innerHTML = 'Nenhuma collection anexada <b class="recomendado">(recomendado)</b>';
+  document.getElementById('btnCollectionRemover').classList.toggle('hidden', !nome);
+}
+document.getElementById('btnCollection').onclick = async () => {
+  const r = await window.api.pickCollection();
+  if (r) { collectionPath = r.path; mostrarCollection(r.nome); }
+};
+document.getElementById('btnCollectionRemover').onclick = () => { collectionPath = null; mostrarCollection(null); };
+
+// Ao informar um CT que já existe, preenche título, BDD, tipo e cURL da última execução
+// Ao digitar uma história/CT que já existem, traz os dados salvos.
+// Só preenche campos vazios (ou preenchidos automaticamente antes), nunca apaga o que a pessoa digitou.
+const auto = {};
+function preencher(id, valor) {
+  const el = document.getElementById(id);
+  if (!el.value.trim() || el.value === auto[id]) { el.value = valor || ''; auto[id] = el.value; }
+}
+let consulta = 0;
+async function carregarExistente() {
+  const n = ++consulta;
+  const story = val('storyId'), ct = val('testCaseId');
+  const [hist, info] = await Promise.all([window.api.historiaInfo(story), window.api.cenarioInfo(story, ct)]);
+  if (n !== consulta) return; // chegou uma digitação mais nova
+  if (hist && hist.titulo) preencher('storyTitle', hist.titulo);
+  const box = document.getElementById('ctInfo');
+  if (!info) {
+    ['testTitle', 'bddText', 'apiCurl'].forEach(id => { if (auto[id] && val(id) === auto[id]) preencher(id, ''); });
+    box.classList.add('hidden');
+    return;
+  }
+  if (info.tipo) definirTipo(info.tipo);
+  preencher('testTitle', info.titulo);
+  preencher('bddText', info.bdd);
+  if (info.api) preencher('apiCurl', info.api.curl);
+  box.textContent = `Já evidenciado · ${info.status} · ${info.data}` + (info.total > 1 ? ` · ${info.total} execuções` : '');
+  box.title = 'Título e BDD preenchidos com a última execução deste cenário';
+  box.classList.remove('hidden');
+}
+let espera;
+['storyId', 'testCaseId'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => { clearTimeout(espera); espera = setTimeout(carregarExistente, 350); });
+  el.addEventListener('change', carregarExistente);
 });
 
 function updateStats() {
@@ -253,7 +358,24 @@ window.api.onTriggerFinish(async () => {
 function showReviewScreen() {
   screenSetup.classList.add('hidden');
   screenReview.classList.remove('hidden');
+  const resumo = document.getElementById('apiResumo');
+  const curl = val('apiCurl');
+  if (tipoTeste === 'back' && (curl || collectionPath)) {
+    resumo.innerHTML = '<b>Requisição</b>' + (collectionPath ? ` <span class="opcional">(com collection anexada)</span>` : '') + (curl ? `<pre></pre>` : '');
+    if (curl) resumo.querySelector('pre').textContent = curl;
+    resumo.classList.remove('hidden');
+  } else resumo.classList.add('hidden');
   renderThumbnails();
+  atualizarVazio();
+}
+
+function atualizarVazio() {
+  document.getElementById('semEvidencias').classList.toggle('hidden', evidences.length > 0);
+  if (!evidences.length) {
+    canvas.classList.add('hidden'); videoPreview.classList.add('hidden');
+    document.getElementById('canvasToolbar').classList.add('hidden');
+    document.getElementById('legendaLinha').classList.add('hidden');
+  }
 }
 
 function renderThumbnails() {
@@ -301,8 +423,72 @@ window.deleteItem = function(idx) {
   if (activeIndex >= evidences.length) activeIndex = evidences.length - 1;
   renderThumbnails();
   if (evidences.length > 0) selectEvidence(Math.max(0, activeIndex));
-  else { canvas.classList.add('hidden'); videoPreview.classList.add('hidden'); document.getElementById('canvasToolbar').classList.add('hidden'); fecharEditorVideo(); }
+  else { fecharEditorVideo(); atualizarVazio(); }
 };
+
+// ---- Prints e vídeos de fora do app: anexar arquivo ou colar (Ctrl+V) ----
+function adicionarImagem(dataUrl, width, height, legenda = '') {
+  evidences.push({ id: Date.now() + Math.random(), type: 'image', original: dataUrl, dataUrl, width, height, highlights: [], legenda });
+}
+function aposAdicionar(qtd) {
+  if (!qtd) return;
+  activeIndex = evidences.length - qtd;
+  updateStats();
+  renderThumbnails();
+  selectEvidence(activeIndex);
+  atualizarVazio();
+}
+
+document.getElementById('btnAnexar').addEventListener('click', async () => {
+  const btn = document.getElementById('btnAnexar');
+  const texto = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Anexando…';
+  try {
+    const itens = await window.api.attachFiles();
+    const erros = itens.filter(i => i.type === 'erro');
+    let qtd = 0;
+    for (const i of itens) {
+      if (i.type === 'image') { adicionarImagem(i.dataUrl, i.width, i.height); qtd++; }
+      else if (i.type === 'video') {
+        evidences.push({ id: Date.now() + Math.random(), type: 'video', filePath: i.filePath, fileUrl: i.fileUrl, cover: i.cover,
+          width: i.width, height: i.height, duration: i.duration || null, editavel: !!i.editavel });
+        qtd++;
+      }
+    }
+    aposAdicionar(qtd);
+    if (erros.length) window.api.showError('Anexar', 'Não foi possível anexar: ' + erros.map(e => e.nome).join(', '));
+  } finally {
+    btn.disabled = false; btn.textContent = texto;
+  }
+});
+
+document.addEventListener('paste', e => {
+  if (screenReview.classList.contains('hidden')) return;
+  const itens = [...(e.clipboardData && e.clipboardData.items || [])];
+  const imgs = itens.filter(i => i.type.startsWith('image/'));
+  if (!imgs.length) return;
+  // colando texto num campo (ex.: do Excel/Word, que também copiam uma imagem): mantém o texto
+  if (e.target.closest('input, textarea') && itens.some(i => i.type === 'text/plain')) return;
+  e.preventDefault();
+  let pendentes = imgs.length, qtd = 0;
+  imgs.forEach(it => {
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        adicionarImagem(leitor.result, img.naturalWidth, img.naturalHeight); qtd++;
+        if (--pendentes === 0) aposAdicionar(qtd);
+      };
+      img.onerror = () => { if (--pendentes === 0) aposAdicionar(qtd); };
+      img.src = leitor.result;
+    };
+    leitor.readAsDataURL(it.getAsFile());
+  });
+});
+
+document.getElementById('legenda').addEventListener('input', e => {
+  if (evidences[activeIndex]) evidences[activeIndex].legenda = e.target.value;
+});
 
 // 6. Editor de Anotações
 let isDrawing = false;
@@ -314,6 +500,8 @@ function selectEvidence(idx) {
   renderThumbnails();
 
   const item = evidences[idx];
+  document.getElementById('legendaLinha').classList.remove('hidden');
+  document.getElementById('legenda').value = item.legenda || '';
   const toolbar = document.getElementById('canvasToolbar');
 
   if (item.type === 'image') {
@@ -415,52 +603,90 @@ document.getElementById('btnClearHighlights').addEventListener('click', () => {
   }
 });
 
-// 7. Geração com Alertas Nativos
+// 7. Gerar evidência: salva o cenário, atualiza o relatório da história e/ou gera o PPT
+try {
+  const pref = JSON.parse(localStorage.getItem('saidas') || 'null');
+  if (pref) { document.getElementById('outRelatorio').checked = !!pref.relatorio; document.getElementById('outPpt').checked = !!pref.ppt; }
+} catch {}
+
+// Observação só aparece quando o teste não passou
+const STATUS_COM_OBS = ['Falhou', 'Bloqueado'];
+function atualizarObservacao() {
+  const v = document.getElementById('finalStatus').value;
+  document.getElementById('grupoObservacao').classList.toggle('hidden', !STATUS_COM_OBS.includes(v));
+}
+document.getElementById('finalStatus').addEventListener('change', atualizarObservacao);
+
 document.getElementById('btnGeneratePPT').addEventListener('click', async () => {
   const status = document.getElementById('finalStatus').value;
-  if (!status) return window.api.showError('Informação Faltante', 'Por favor, escolha o Status Final do Teste antes de gerar.');
+  if (!status) return window.api.showError('Informação Faltante', 'Escolha o Status do Teste antes de gerar.');
+  const erroBdd = validarBdd(val('bddText'));
+  if (erroBdd) return window.api.showError('Cenário BDD incompleto', erroBdd);
+  const saidas = { relatorio: document.getElementById('outRelatorio').checked, ppt: document.getElementById('outPpt').checked };
+  if (!saidas.relatorio && !saidas.ppt) return window.api.showError('Nada para gerar', 'Marque "Relatório da história" e/ou "PPT do cenário".');
+  if (!evidences.length && !(tipoTeste === 'back' && val('apiCurl'))) return window.api.showError('Sem evidências', 'Capture ao menos um print ou vídeo.');
+  try { localStorage.setItem('saidas', JSON.stringify(saidas)); } catch {}
 
   const settings = await window.api.getSettings();
+  const btn = document.getElementById('btnGeneratePPT');
+  btn.disabled = true; btn.textContent = 'Gerando…';
 
-  const payload = {
-    storyId: document.getElementById('storyId').value,
-    testCaseId: document.getElementById('testCaseId').value,
-    author: document.getElementById('author').value,
+  const dados = {
+    storyId: val('storyId'),
+    storyTitle: val('storyTitle'),
+    testCaseId: val('testCaseId'),
+    tipo: tipoTeste,
+    author: val('author'),
     environment: document.getElementById('environment').value,
-    version: document.getElementById('version').value,
-    title: document.getElementById('testTitle').value,
+    version: val('version'),
+    title: val('testTitle'),
     bddText: document.getElementById('bddText').value,
-    status: status,
+    status,
+    observacao: STATUS_COM_OBS.includes(status) ? val('observacao') : '',
     dateTime: new Date().toLocaleString('pt-BR'),
     jiraBaseUrl: settings.jiraUrl,
+    api: tipoTeste === 'back' ? { curl: document.getElementById('apiCurl').value, collectionPath } : null,
     evidences: evidences.map(e => e.type === 'image'
-      ? { type: 'image', dataUrl: e.dataUrl, width: e.width, height: e.height }
-      : { type: 'video', filePath: e.filePath, cover: e.cover, width: e.width, height: e.height })
+      ? { type: 'image', dataUrl: e.dataUrl, width: e.width, height: e.height, legenda: e.legenda || '' }
+      : { type: 'video', filePath: e.filePath, cover: e.cover, width: e.width, height: e.height, duration: e.duration, legenda: e.legenda || '' })
   };
 
-  const res = await window.api.generatePptx(payload);
-  if (res.success) {
-    window.api.showMessage('Apresentação Gerada', `PPTX gerado com sucesso!\nSalvo em:\n${res.filePath}`);
-    
-    let currentCT = document.getElementById('testCaseId').value;
-    let ctMatch = currentCT.match(/\d+/);
-    if (ctMatch) {
-      let num = parseInt(ctMatch[0]) + 1;
-      let nextCT = currentCT.replace(/\d+/, num.toString().padStart(ctMatch[0].length, '0'));
-      document.getElementById('testCaseId').value = nextCT;
-    }
+  const res = await window.api.generateEvidence(dados, modoExecucao, saidas);
+  btn.disabled = false; btn.textContent = 'Gerar evidência';
+  if (!res.success) return window.api.showError('Erro ao gerar', 'Ocorreu um erro ao gerar a evidência: ' + res.error);
 
-    document.getElementById('bddText').value = '';
-    document.getElementById('testTitle').value = '';
-    document.getElementById('finalStatus').value = '';
-    evidences = [];
-    activeIndex = -1;
+  const botoes = [];
+  if (res.relatorio) botoes.push('Abrir relatório');
+  if (res.bug) botoes.push('Abrir relatório do bug');
+  if (res.ppt) botoes.push('Abrir PPT');
+  botoes.push('Abrir pasta', 'OK');
+  const escolha = await window.api.ask({
+    titulo: 'Evidência gerada',
+    mensagem: `${dados.testCaseId} salvo${res.execucao > 1 ? ` (${res.execucao}ª execução)` : ''}.`,
+    detalhe: [res.relatorio ? `Relatório da ${dados.storyId} atualizado.` : '', res.bug ? 'Relatório para abertura de bug gerado (pasta Bugs).' : '', res.ppt ? 'PPT do cenário gerado.' : '', `Pasta: ${res.pasta}`].filter(Boolean).join('\n'),
+    botoes, cancelar: botoes.length - 1
+  });
+  const acao = botoes[escolha];
+  if (acao === 'Abrir relatório') window.api.openPath(res.relatorio);
+  if (acao === 'Abrir relatório do bug') window.api.openPath(res.bug);
+  if (acao === 'Abrir PPT') window.api.openPath(res.ppt);
+  if (acao === 'Abrir pasta') window.api.openPath(res.pasta);
 
-    screenReview.classList.add('hidden');
-    screenSetup.classList.remove('hidden');
-  } else {
-    window.api.showError('Erro ao Gerar', 'Ocorreu um erro ao gerar o PPTX: ' + res.error);
-  }
+  // Próximo cenário: mantém história, ambiente e tipo; avança o CT
+  const ctMatch = val('testCaseId').match(/\d+/);
+  if (ctMatch) document.getElementById('testCaseId').value = val('testCaseId').replace(/\d+/, String(parseInt(ctMatch[0]) + 1).padStart(ctMatch[0].length, '0'));
+  ['bddText', 'testTitle', 'apiCurl', 'observacao'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('finalStatus').value = '';
+  atualizarObservacao();
+  collectionPath = null; mostrarCollection(null);
+  modoExecucao = 'nova';
+  carregarExistente();
+  fecharEditorVideo();
+  evidences = [];
+  activeIndex = -1;
+  screenReview.classList.add('hidden');
+  screenSetup.classList.remove('hidden');
+  atualizarBotaoRevisao();
 });
 
 // Modal de Configurações
@@ -504,16 +730,40 @@ document.getElementById('btnResumeCapture').addEventListener('click', () => {
   iniciarSessao();
 });
 
+// Voltar: retorna aos dados do cenário mantendo prints, vídeos, destaques e legendas
+function atualizarBotaoRevisao() {
+  const tem = evidences.length > 0;
+  const btn = document.getElementById('btnIrRevisao');
+  btn.classList.toggle('hidden', !tem);
+  btn.textContent = `Voltar para a revisão (${evidences.length} ${evidences.length === 1 ? 'item' : 'itens'})`;
+  document.getElementById('btnReviewNoCapture').classList.toggle('hidden', tem || tipoTeste !== 'back');
+}
+document.getElementById('btnVoltar').addEventListener('click', () => {
+  document.querySelectorAll('#screenReview video').forEach(v => { try { v.pause(); } catch {} });
+  screenReview.classList.add('hidden');
+  screenSetup.classList.remove('hidden');
+  atualizarBotaoRevisao();
+  window.scrollTo(0, 0);
+});
+document.getElementById('btnIrRevisao').addEventListener('click', () => {
+  if (!validarCaso()) return;
+  showReviewScreen();
+});
+
 // Descartar tudo
 document.getElementById('btnDiscardAll').addEventListener('click', () => {
   if (!confirm('Descartar todos os prints e vídeos deste cenário?')) return;
   stopStream();
   fecharEditorVideo();
+  document.getElementById('observacao').value = '';
+  modoExecucao = 'nova';
   evidences = [];
   activeIndex = -1;
   document.getElementById('finalStatus').value = '';
+  atualizarObservacao();
   screenReview.classList.add('hidden');
   screenSetup.classList.remove('hidden');
+  atualizarBotaoRevisao();
 });
 
 
