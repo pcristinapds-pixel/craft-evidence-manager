@@ -284,7 +284,7 @@ function renderCriterios(criterios) {
 function ligarAcoesCriterio(raiz) {
   raiz.querySelectorAll('[data-novo]').forEach(b => b.onclick = () => {
     const c = J.visao.efetivos.find(x => x.id === b.dataset.novo);
-    abrirModalCenario({ origem: 'criterio', origemDetalhe: c.id, criterios: [c.id], referencia: `${c.id} · ${c.texto}`, textoOrigem: `Para o critério ${c.id}, que ainda não tem cenário.`, bdd: c.bdd });
+    abrirModalCenario({ origem: 'criterio', origemDetalhe: c.id, criterios: [c.id], refRotulo: c.id, refTexto: c.texto, textoOrigem: 'Critério sem cenário', bdd: c.bdd });
   });
   raiz.querySelectorAll('[data-nsa]').forEach(b => b.onclick = async () => {
     const id = b.dataset.nsa;
@@ -306,7 +306,7 @@ function renderRegras(el) {
     regras.map((r, i) => `<div class="regra"><span>${escJ(r.titulo)}<small>${escJ(r.autor || '')}${r.data ? ' · ' + data(r.data) : ''}</small></span><button class="btn-small btn-navy" data-regra="${i}">+ Cenário</button></div>`).join('');
   el.querySelectorAll('[data-regra]').forEach(b => b.onclick = () => {
     const r = regras[+b.dataset.regra];
-    abrirModalCenario({ titulo: r.titulo, origem: 'comentario', origemDetalhe: `comentário de ${r.autor || 'alguém'}${r.data ? ', ' + data(r.data) : ''}`, referencia: r.texto, textoOrigem: `A partir do comentário de ${r.autor || 'alguém'}.` });
+    abrirModalCenario({ titulo: r.titulo, origem: 'comentario', origemDetalhe: `comentário de ${r.autor || 'alguém'}${r.data ? ', ' + data(r.data) : ''}`, refRotulo: 'Comentário', refTexto: r.texto, textoOrigem: `de ${r.autor || 'alguém'}${r.data ? ' · ' + data(r.data) : ''}` });
   });
 }
 
@@ -615,29 +615,71 @@ $j('btnConfVoltar').onclick = () => { if (jiraConfigurado()) { mostrarTela('scre
 // ---------------------------------------------------------------- cenário novo
 
 let modalCenarioCtx = null;
+let mcNaturezaManual = false;
+
+// O plano está em português (Dado/Quando/Então) ou em inglês (Given/When/Then)?
+function idiomaDoPlano() {
+  const bdds = ((J.visao && J.visao.cenarios) || []).map(c => c.bdd || '').join('\n');
+  if (/^\s*(dado|quando|ent[aã]o)\b/im.test(bdds)) return 'pt';
+  if (/^\s*(given|when|then)\b/im.test(bdds)) return 'en';
+  return 'pt';
+}
+function proximoCt() {
+  const nums = ((J.visao && J.visao.cenarios) || []).map(c => Number(String(c.ct).replace(/\D/g, '')) || 0);
+  return 'CT' + String(Math.max(0, ...nums) + 1).padStart(2, '0');
+}
+function mcMostrarErro(id, texto) {
+  const el = $j(id);
+  el.classList.toggle('hidden', !texto);
+  if (texto) el.textContent = texto;
+}
+
 function abrirModalCenario(ctx) {
   modalCenarioCtx = ctx;
+  mcNaturezaManual = false;
+  const pt = idiomaDoPlano() === 'pt';
+  $j('mcCt').textContent = `Será o ${proximoCt()}`;
   $j('mcTitulo').textContent = 'Novo cenário';
+  $j('mcReferencia').classList.toggle('hidden', !ctx.refTexto);
+  $j('mcRefRotulo').textContent = ctx.refRotulo || '';
+  $j('mcRefRotulo').classList.toggle('hidden', !ctx.refRotulo);
   $j('mcOrigem').textContent = ctx.textoOrigem || '';
-  $j('mcReferencia').classList.toggle('hidden', !ctx.referencia);
-  $j('mcReferencia').textContent = ctx.referencia || '';
+  $j('mcRefTexto').textContent = ctx.refTexto || '';
   $j('mcNome').value = ctx.titulo || '';
-  $j('mcBdd').value = ctx.bdd || 'Given \nWhen \nThen ';
-  definirNaturezaModal(sugerirNaturezaUI(ctx.referencia || ''));
+  $j('mcBdd').value = ctx.bdd || (pt ? 'Dado \nQuando \nEntão ' : 'Given \nWhen \nThen ');
+  $j('mcBddDica').textContent = pt
+    ? 'Um passo por linha: Dado, Quando, Então. Use E para continuar um passo.'
+    : 'Um passo por linha: Given, When, Then. Use And para continuar um passo.';
+  mcMostrarErro('mcNomeErro', ''); mcMostrarErro('mcBddErro', '');
+  definirNaturezaModal(sugerirNaturezaUI(ctx.bdd || ctx.refTexto || ''));
   const sub = J.visao && J.visao.plano && J.visao.plano.subtarefa;
   $j('mcGravarLinha').style.display = jiraConfigurado() && sub ? '' : 'none';
-  if (sub) $j('mcGravarTxt').textContent = `Gravar também na ${sub} (sub-task do plano)`;
+  if (sub) $j('mcGravarTxt').textContent = `Gravar também na ${sub}`;
+  $j('mcGravarLinha').title = sub ? `${sub} é a sub-task do plano no Jira` : '';
   $j('modalCenario').classList.remove('hidden');
   $j('mcNome').focus();
 }
 function definirNaturezaModal(n) { document.querySelectorAll('#mcNatureza button').forEach(b => b.classList.toggle('ativo', b.dataset.v === n)); }
-document.querySelectorAll('#mcNatureza button').forEach(b => b.onclick = () => definirNaturezaModal(b.dataset.v));
-$j('mcCancelar').onclick = () => $j('modalCenario').classList.add('hidden');
+function atualizarDicaNatureza() {
+  $j('mcNaturezaDica').textContent = mcNaturezaManual ? 'Escolhido por você' : 'Sugerido a partir do BDD, clique para alterar';
+}
+document.querySelectorAll('#mcNatureza button').forEach(b => b.onclick = () => { mcNaturezaManual = true; definirNaturezaModal(b.dataset.v); atualizarDicaNatureza(); });
+$j('mcBdd').addEventListener('input', () => {
+  mcMostrarErro('mcBddErro', '');
+  if (!mcNaturezaManual) definirNaturezaModal(sugerirNaturezaUI($j('mcBdd').value));
+});
+$j('mcNome').addEventListener('input', () => mcMostrarErro('mcNomeErro', ''));
+const fecharModalCenario = () => $j('modalCenario').classList.add('hidden');
+$j('mcCancelar').onclick = fecharModalCenario;
+$j('mcFechar').onclick = fecharModalCenario;
+$j('modalCenario').addEventListener('keydown', e => { if (e.key === 'Escape') fecharModalCenario(); });
 $j('mcAdicionar').onclick = async () => {
   const titulo = $j('mcNome').value.trim(), bdd = $j('mcBdd').value.trim();
-  if (!titulo) return window.api.showError('Campo obrigatório', 'Dê um título ao cenário.');
   const erro = validarBdd(bdd);
-  if (erro) return window.api.showError('Cenário BDD incompleto', erro);
+  mcMostrarErro('mcNomeErro', titulo ? '' : 'Dê um título ao cenário.');
+  mcMostrarErro('mcBddErro', erro || '');
+  if (!titulo) return $j('mcNome').focus();
+  if (erro) return $j('mcBdd').focus();
   const natureza = document.querySelector('#mcNatureza button.ativo').dataset.v;
   const gravarNoJira = $j('mcGravarLinha').style.display !== 'none' && $j('mcGravar').checked;
   const ctx = modalCenarioCtx || {};
@@ -646,7 +688,7 @@ $j('mcAdicionar').onclick = async () => {
     if (erroJira(r, 'Novo cenário')) window.api.showError('Token de API recusado', 'O cenário não foi criado. Troque o token nas configurações ou desmarque a gravação no Jira.');
     return;
   }
-  $j('modalCenario').classList.add('hidden');
+  fecharModalCenario();
   J.visao = { ...r.dados.visao, escolhaPlano: J.visao.escolhaPlano };
   if (!$j('screenSetup').classList.contains('hidden')) selecionarCT(r.dados.ct);
   else renderConferir();

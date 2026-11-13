@@ -368,20 +368,44 @@
   </div>
 
   <div id="modalCenario" class="modal hidden">
-    <div class="modal-content modal-largo" role="dialog" aria-labelledby="mcTitulo">
-      <h3 id="mcTitulo">Novo cenário</h3>
-      <p id="mcOrigem" class="opcional"></p>
-      <div id="mcReferencia" class="referencia hidden"></div>
-      <div class="form-group"><label for="mcNome">Título do cenário *</label><input type="text" id="mcNome"></div>
-      <div class="form-group"><label for="mcBdd">Cenário (BDD) *</label><textarea id="mcBdd" rows="5" class="mono">Given &#10;When &#10;Then </textarea></div>
-      <div class="linha-natureza"><span class="rotulo">Cenário *</span>
-        <div class="seg" id="mcNatureza" role="group" aria-label="Cenário positivo ou negativo">
-          <button type="button" data-v="positivo" class="ativo">Positivo</button><button type="button" data-v="negativo">Negativo</button>
-        </div></div>
-      <label class="check" id="mcGravarLinha"><input type="checkbox" id="mcGravar" checked> <span id="mcGravarTxt">Gravar também na sub-task do plano no Jira</span></label>
-      <div class="modal-actions">
-        <button id="mcAdicionar" class="btn-primary">Adicionar ao plano</button>
-        <button id="mcCancelar" class="btn-secondary">Cancelar</button>
+    <div class="modal-content modal-cenario" role="dialog" aria-labelledby="mcTitulo">
+      <div class="mc-topo">
+        <div>
+          <span id="mcCt" class="mc-ct"></span>
+          <h3 id="mcTitulo">Novo cenário</h3>
+        </div>
+        <button id="mcFechar" type="button" class="mc-fechar" aria-label="Fechar">✕</button>
+      </div>
+      <div class="mc-corpo">
+        <div id="mcReferencia" class="mc-ref hidden">
+          <div class="mc-ref-cab"><span id="mcRefRotulo" class="crit-id"></span><span id="mcOrigem"></span></div>
+          <p id="mcRefTexto"></p>
+        </div>
+        <div class="form-group">
+          <label for="mcNome">Título do cenário *</label>
+          <input type="text" id="mcNome" placeholder="O que este cenário valida? Ex.: Validar envio do e-mail no idioma do usuário">
+          <span id="mcNomeErro" class="mc-erro hidden">Dê um título ao cenário.</span>
+        </div>
+        <div class="form-group">
+          <label for="mcBdd">Cenário (BDD) *</label>
+          <textarea id="mcBdd" rows="6" class="mono" spellcheck="false"></textarea>
+          <span id="mcBddDica" class="mc-dica"></span>
+          <span id="mcBddErro" class="mc-erro hidden"></span>
+        </div>
+        <div class="mc-tipo">
+          <span class="rotulo">Tipo do teste *</span>
+          <div class="seg" id="mcNatureza" role="group" aria-label="Teste positivo ou negativo">
+            <button type="button" data-v="positivo" class="ativo">Positivo</button><button type="button" data-v="negativo">Negativo</button>
+          </div>
+          <span id="mcNaturezaDica" class="mc-dica">Sugerido a partir do BDD, clique para alterar</span>
+        </div>
+      </div>
+      <div class="mc-rodape">
+        <label class="check" id="mcGravarLinha"><input type="checkbox" id="mcGravar" checked> <span id="mcGravarTxt">Gravar também na sub-task do plano no Jira</span></label>
+        <div class="mc-botoes">
+          <button id="mcCancelar" type="button" class="btn-secondary">Cancelar</button>
+          <button id="mcAdicionar" type="button" class="btn-primary">Adicionar ao plano</button>
+        </div>
       </div>
     </div>
   </div>

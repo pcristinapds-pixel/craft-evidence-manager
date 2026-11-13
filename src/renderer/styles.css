@@ -408,3 +408,27 @@ textarea.mono { font-family: Consolas, 'Courier New', monospace; font-size: 13px
 .crit-acoes .btn-small { height: 28px; font-size: 12px; padding: 0 10px; }
 .grupo-crit { padding: 8px 0; }
 .crit-aberto { border: 0; background: none; padding: 4px 0 8px; margin: 0; }
+
+/* novo cenário: cabeçalho e rodapé fixos, só o meio rola */
+.modal-content.modal-cenario { width: min(620px, 94vw); max-height: 92vh; padding: 0; gap: 0; overflow: hidden; display: flex; flex-direction: column; }
+.mc-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 18px 24px 14px; border-bottom: 1px solid var(--border); }
+.mc-topo h3 { margin: 2px 0 0; padding: 0; border: 0; font-size: 19px; color: var(--navy); }
+.mc-ct { font-size: 12px; font-weight: 700; color: #6B7B88; letter-spacing: .02em; }
+.mc-fechar { width: 32px; height: 32px; padding: 0; border-radius: 8px; background: transparent; color: #6B7B88; border: 0; font-size: 15px; }
+.mc-fechar:hover { background: #F3F4F6; color: var(--navy); }
+.mc-corpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 18px 24px 20px; display: flex; flex-direction: column; gap: 16px; }
+.mc-corpo > * { flex-shrink: 0; }
+.mc-corpo .form-group { gap: 6px; margin: 0; }
+.mc-ref { border: 1px solid #FED7AA; border-left: 4px solid #F59E0B; background: #FFFBF5; border-radius: 8px; padding: 10px 14px 12px; }
+.mc-ref-cab { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #9A3412; margin-bottom: 6px; }
+.mc-ref p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text); white-space: pre-line; max-height: 9em; overflow-y: auto; }
+.mc-corpo textarea.mono { min-height: 132px; line-height: 1.6; resize: vertical; }
+.mc-dica { font-size: 12px; color: #8A97A3; }
+.mc-erro { font-size: 12.5px; font-weight: 600; color: #B91C1C; }
+.mc-tipo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 2px; }
+.mc-tipo .rotulo { min-width: 0; }
+.mc-rodape { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 24px; border-top: 1px solid var(--border); background: #F9FAFB; }
+.mc-rodape .check { flex: 0 1 auto; min-width: 0; margin: 0; }
+.mc-botoes button { margin: 0; }
+.mc-rodape .check { font-weight: 500; }
+.mc-botoes { display: flex; gap: 10px; margin-left: auto; flex-shrink: 0; }
