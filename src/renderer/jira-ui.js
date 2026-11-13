@@ -239,16 +239,28 @@ function renderAside() {
     const g = b.dataset.grupo; J.gruposAbertos.has(g) ? J.gruposAbertos.delete(g) : J.gruposAbertos.add(g); renderAside();
   });
   ligarAcoesCriterio($j('critLista'));
+  // texto longo aparece em até 3 linhas; clique (ou Enter) mostra inteiro
+  $j('critLista').querySelectorAll('.crit-texto').forEach(el => {
+    const alternar = () => { el.classList.toggle('aberto'); el.setAttribute('aria-expanded', el.classList.contains('aberto')); };
+    el.onclick = alternar; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alternar(); } };
+  });
 
   // regras dos comentários
   renderRegras($j('asideRegras'));
 }
 
 function linhaCriterio(c) {
-  const cts = c.naoSeAplica ? `<div class="cts">Não se aplica · ${escJ(c.naoSeAplica)}</div>`
-    : c.cts.length ? `<div class="cts">Coberto por ${c.cts.map(x => escJ(x.ct)).join(', ')}</div>`
-    : `<div class="cts">Sem cenário</div><div class="crit-acoes"><button class="btn-small btn-navy" data-novo="${escJ(c.id)}">+ Escrever cenário</button><button class="btn-link" data-nsa="${escJ(c.id)}">Não se aplica</button></div>`;
-  return `<div class="crit-item ${!c.naoSeAplica && !c.cts.length ? 'sem' : ''}"><b>${escJ(c.id)}</b> ${escJ(c.texto)}${cts}</div>`;
+  const sem = !c.naoSeAplica && !c.cts.length;
+  const cls = c.naoSeAplica ? 'nsa' : (sem ? 'sem' : 'ok');
+  const status = c.naoSeAplica ? 'Não se aplica'
+    : sem ? 'Sem cenário'
+    : '✓ ' + c.cts.map(x => escJ(x.ct)).join(', ');
+  const acoes = sem ? `<div class="crit-acoes"><button class="btn-small btn-navy" data-novo="${escJ(c.id)}">+ Escrever cenário</button><button class="btn-link" data-nsa="${escJ(c.id)}">Não se aplica</button></div>` : '';
+  return `<div class="crit-item ${cls}">
+    <div class="crit-cab"><span class="crit-id">${escJ(c.id)}</span><span class="crit-status">${status}</span></div>
+    <div class="crit-texto" title="${escJ(c.texto)}" tabindex="0" role="button" aria-expanded="false">${escJ(c.texto)}</div>
+    ${c.naoSeAplica && c.naoSeAplica !== 'não se aplica a teste' ? `<div class="crit-motivo">${escJ(c.naoSeAplica)}</div>` : ''}
+    ${acoes}</div>`;
 }
 
 function renderCriterios(criterios) {

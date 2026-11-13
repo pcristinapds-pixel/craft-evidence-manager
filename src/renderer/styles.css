@@ -386,3 +386,25 @@ textarea.mono { font-family: Consolas, 'Courier New', monospace; font-size: 13px
 .sf-rodape { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 22px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .sf-rodape .acoes-esq { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 @media (max-width: 900px) { .sf-corpo { flex-direction: column; overflow-y: auto; } .sf-lado { flex: none; border-left: 0; border-top: 1px solid var(--border); } }
+
+/* critérios na lateral: um bloco por critério, com respiro e status em destaque */
+#critLista { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.crit-aberto { gap: 8px; }
+.crit-item { border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; background: #fff; display: flex; flex-direction: column; gap: 5px; }
+.crit-item.sem { border-color: #FDBA74; background: #FFFBF5; }
+.crit-item.nsa { background: #F9FAFB; }
+.crit-item.nsa .crit-texto { color: #6B7280; }
+.crit-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.crit-id { font-family: Consolas, monospace; font-size: 12px; font-weight: 700; color: var(--navy); background: #EDF2F7; border-radius: 4px; padding: 1px 7px; }
+.crit-status { font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; }
+.crit-item.ok .crit-status { color: #166534; background: #DCFCE7; }
+.crit-item.sem .crit-status { color: #9A3412; background: #FFEDD5; }
+.crit-item.nsa .crit-status { color: #4B5563; background: #F3F4F6; }
+.crit-texto { font-size: 13px; line-height: 1.45; color: var(--text); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+.crit-texto.aberto { display: block; }
+.crit-texto:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.crit-motivo { font-size: 12px; color: #6B7280; }
+.crit-acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+.crit-acoes .btn-small { height: 28px; font-size: 12px; padding: 0 10px; }
+.grupo-crit { padding: 8px 0; }
+.crit-aberto { border: 0; background: none; padding: 4px 0 8px; margin: 0; }
