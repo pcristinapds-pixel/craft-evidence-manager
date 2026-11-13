@@ -245,8 +245,8 @@ if (D.linkHistorico) $('gerado').insertAdjacentHTML('afterend', ` <a class="link
 // ---------- formatação ----------
 function bdd(t) {
   return esc(t).split('\n').map(l => l
-    .replace(/^(\s*)(Dado que|Dado|Quando|Então|Cenário:)/, '$1<span class="kw">$2</span>')
-    .replace(/^(\s*)(E|Mas)(\s)/, '$1<span class="kw2">$2</span>$3')
+    .replace(/^(\s*)(Dado que|Dado|Quando|Então|Cenário:|Given|When|Then|Scenario:)(?=\s|$)/i, '$1<span class="kw">$2</span>')
+    .replace(/^(\s*)(E|Mas|And|But)(\s)/i, '$1<span class="kw2">$2</span>$3')
     .replace(/`([^`]+)`/g, '<code>$1</code>')).join('<br>');
 }
 function realceCurl(txt) {

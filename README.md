@@ -8,7 +8,7 @@
 ## Testes unitários
 `npm test` roda os testes da pasta `tests/` (Node, sem dependências extras):
 - **mascarar**: tokens, senhas, chaves de API e CPF viram variáveis no cURL
-- **bdd**: estrutura mínima Dado / Quando / Então
+- **bdd**: estrutura mínima Dado / Quando / Então (ou Given / When / Then)
 - **evidence-store**: execuções novas e substituídas, ordem dos CTs, back-end
 - **report-builder**: relatório, histórico separado, relatório de bug, limites de vídeo (50 MB / 100 MB), segurança do HTML
 - **video-tools**: padronizar, compactar e editar vídeo (usa o FFmpeg; pulados se ele não estiver instalado)

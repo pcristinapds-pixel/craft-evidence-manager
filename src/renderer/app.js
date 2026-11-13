@@ -134,7 +134,7 @@ function validarCaso() {
   if (!val('storyId')) { window.api.showError('Campo Obrigatório', 'Informe o ID da História antes de continuar.'); return false; }
   if (!val('testCaseId')) { window.api.showError('Campo Obrigatório', 'Informe o Caso de Teste antes de continuar.'); return false; }
   if (!val('testTitle')) { window.api.showError('Campo Obrigatório', 'Informe o Título do Teste antes de continuar.'); return false; }
-  if (!val('bddText')) { window.api.showError('Campo Obrigatório', 'Descreva o cenário em BDD (Dado que / Quando / Então) antes de continuar.'); return false; }
+  if (!val('bddText')) { window.api.showError('Campo Obrigatório', 'Descreva o cenário em BDD (Dado / Quando / Então ou Given / When / Then) antes de continuar.'); return false; }
   const erroBdd = validarBdd(val('bddText'));
   if (erroBdd) { window.api.showError('Cenário BDD incompleto', erroBdd); return false; }
   return true;
