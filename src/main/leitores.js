@@ -132,16 +132,25 @@ function lerPlano(blocos) {
   const cenarios = [];
   let atual = null;
   let tagPendente = null;   // "@C08" na linha de cima numera o próximo cenário
-  const fechar = () => { if (atual && atual.linhas.some(l => PASSO.test(sem(l)))) cenarios.push(atual); atual = null; };
+  // só é cenário se tiver ação ou resultado (Quando/Então): um bloco só com "Dado/E" é contexto
+  const fechar = () => { if (atual && atual.linhas.some(l => /^(quando|when|entao|then)\b/.test(sem(l)))) cenarios.push(atual); atual = null; };
+  let emContexto = false;   // "Contexto:" / "Background:" vale para todos os cenários: não é um CT
   for (const b of blocos) {
     const texto = (b.texto || '').trim();
     if ((b.tipo === 'paragrafo' || b.tipo === 'titulo') && SO_TAGS.test(texto)) {
       tagPendente = { numero: numeroDaTag(texto), texto, topo: b.topo };
+      emContexto = false;
       continue; // a tag não faz parte do cenário anterior
     }
     // "Funcionalidade:", "Contexto:", "Regra:": encerra o cenário anterior e não abre outro
-    if ((b.tipo === 'paragrafo' || b.tipo === 'titulo') && SECAO_GHERKIN.test(texto)) { fechar(); tagPendente = null; continue; }
+    if ((b.tipo === 'paragrafo' || b.tipo === 'titulo') && SECAO_GHERKIN.test(texto)) {
+      fechar(); tagPendente = null;
+      emContexto = /^(contexto|background)\b/i.test(texto);
+      continue;
+    }
     const t = tituloDeCenario(b);
+    if (emContexto && !t) { if (b.tipo === 'linha') emContexto = false; continue; } // passos do contexto
+    emContexto = false;
     if (t) {
       fechar();
       const numero = t.numero != null ? t.numero : (tagPendente && tagPendente.numero);

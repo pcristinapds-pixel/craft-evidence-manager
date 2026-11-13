@@ -159,6 +159,21 @@ test('"E" e "Mas" depois do Então continuam no mesmo cenário', () => {
   assert.equal(L.lerPlano(paraBlocos(doc))[0].bdd.split('\n').length, 5);
 });
 
+test('"contexto:" com Dado/E não vira cenário', () => {
+  const doc = F.doc(F.p('contexto:'), F.p('Dado que estou logado no portal como Inside Sales'),
+    F.p('E inicio uma cotação aérea do cliente Portlink, EXW, Door to Airport, filial SPO'),
+    F.p('@C01'), F.p('Esquema do Cenário: Coleta na Itália'), F.p('Dado que a coleta é na Itália'), F.p('Quando informo o CEP'), F.p('Então o estado é obrigatório'),
+    F.p('@C02'), F.p('Esquema do Cenário: Coleta no Brasil'), F.p('Dado que a coleta é no Brasil'), F.p('Quando informo a cidade'), F.p('Então cidade e estado são obrigatórios'));
+  const p = L.lerPlano(paraBlocos(doc));
+  assert.deepEqual(p.map(c => [c.ct, c.titulo]), [['CT01', 'Coleta na Itália'], ['CT02', 'Coleta no Brasil']]);
+  assert.doesNotMatch(p[0].bdd, /Inside Sales/);
+});
+
+test('bloco solto só com Dado/E (sem Quando/Então) não vira cenário', () => {
+  const doc = F.doc(F.p('Dado que estou logado'), F.p('E tenho uma cotação'), F.p('Cenário: A'), F.p('Dado x'), F.p('Quando y'), F.p('Então z'));
+  assert.deepEqual(L.lerPlano(paraBlocos(doc)).map(c => c.titulo), ['A']);
+});
+
 test('títulos sem passos BDD não viram cenário', () => {
   assert.equal(L.lerPlano(paraBlocos(F.doc(F.h(2, 'Observações'), F.p('nada aqui')))).length, 0);
 });
