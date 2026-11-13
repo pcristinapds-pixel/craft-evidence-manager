@@ -13,6 +13,7 @@
 - **report-builder**: relatório, histórico separado, relatório de bug, limites de vídeo (50 MB / 100 MB), segurança do HTML
 - **adf**: conversão do texto do Jira (listas, subitens, citações de issue, réguas)
 - **jira**: cliente do Jira Cloud (token recusado, campos personalizados pelo nome, minhas sub-tasks)
+- **leitores**: critérios de aceite (lista, grupos, subitens, Gherkin, texto corrido), cenários da sub-task [QA], regras nos comentários
 - **credenciais**: token de API guardado criptografado, nunca devolvido para a tela
 - **video-tools**: padronizar, compactar e editar vídeo (usa o FFmpeg; pulados se ele não estiver instalado)
 

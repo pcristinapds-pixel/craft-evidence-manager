@@ -5,7 +5,7 @@ const F = require('./fixtures/adf');
 
 test('parágrafos e títulos viram blocos com o texto', () => {
   const b = paraBlocos(F.doc(F.h(2, '1. Validar envio'), F.p(F.forte('Given'), ' um acesso')));
-  assert.deepEqual(b, [{ tipo: 'titulo', nivel: 2, texto: '1. Validar envio' }, { tipo: 'paragrafo', texto: 'Given um acesso' }]);
+  assert.deepEqual(b, [{ tipo: 'titulo', nivel: 2, texto: '1. Validar envio', topo: 0 }, { tipo: 'paragrafo', texto: 'Given um acesso', topo: 1 }]);
 });
 
 test('lista numerada guarda o número e subitens ficam um nível abaixo', () => {
@@ -36,6 +36,11 @@ test('aceita texto simples (Jira antigo) e valores vazios', () => {
 test('quebra de linha dentro do parágrafo vira linhas separadas', () => {
   const b = paraBlocos(F.doc({ type: 'paragraph', content: [F.t('a'), { type: 'hardBreak' }, F.t('b')] }));
   assert.deepEqual(b.map(x => x.texto), ['a', 'b']);
+});
+
+test('itens de uma lista apontam para o mesmo nó do topo', () => {
+  const b = paraBlocos(F.doc(F.p('x'), F.ol('um', F.li('dois', F.ul('dois-a')))));
+  assert.deepEqual(b.map(x => x.topo), [0, 1, 1, 1]);
 });
 
 test('paraTexto monta listas com número e marcador', () => {

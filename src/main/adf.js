@@ -7,6 +7,7 @@
 //     { tipo: 'item', nivel: 1.., numero: 3 | null, texto }   (item de lista; nivel 1 = lista de fora)
 //     { tipo: 'linha' }                                       (régua horizontal)
 //     { tipo: 'codigo', texto }
+//   Em um documento, cada bloco traz também `topo`: o índice do nó de origem em doc.content.
 // paraTexto(adf): texto simples, com listas numeradas e marcadores, para mostrar na tela.
 // deTexto(texto): monta um ADF simples a partir de texto (para gravar no Jira).
 
@@ -86,7 +87,10 @@ function paraBlocos(adf) {
         else { const t = limpa(inline(n)); if (t) out.push({ tipo: 'paragrafo', texto: t }); }
     }
   };
-  bloco(adf, 0);
+  // cada bloco guarda de qual nó do topo do documento veio (para regravar só um trecho)
+  if (adf.type === 'doc') {
+    (adf.content || []).forEach((n, i) => { const ini = out.length; bloco(n, 0); for (let k = ini; k < out.length; k++) out[k].topo = i; });
+  } else bloco(adf, 0);
   return out;
 }
 
