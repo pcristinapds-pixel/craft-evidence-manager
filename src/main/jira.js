@@ -143,7 +143,41 @@ function criarCliente({ site, email, token, fetch = globalThis.fetch } = {}) {
     await req(`/rest/api/3/issue/${encodeURIComponent(chave)}`, { method: 'PUT', body: { fields: { description: adf } } });
   }
 
-  return { site: base, req, eu, historia, subtarefa, minhasSubtarefas, atualizarDescricao };
+  // ---- sub-falha
+  // Tipo de issue "Sub-falha" (ou outro tipo de sub-tarefa com "falha"/"bug" no nome) do projeto
+  async function tipoSubFalha(projeto) {
+    const r = await req(`/rest/api/3/issue/createmeta/${encodeURIComponent(projeto)}/issuetypes?maxResults=100`);
+    const tipos = (r.issueTypes || r.values || []).filter(t => t.subtask);
+    const t = tipos.find(x => mesmoNome(x.name, 'Sub-falha')) || tipos.find(x => /falha|bug|defeito/i.test(x.name));
+    if (!t) throw new JiraErro(`O projeto ${projeto} não tem o tipo de issue "Sub-falha".`, 'config');
+    return { id: t.id, nome: t.name };
+  }
+
+  async function prioridades() {
+    const r = await req('/rest/api/3/priority');
+    return (r || []).map(p => ({ id: p.id, nome: p.name }));
+  }
+
+  // Cria a issue e devolve { chave, url }
+  async function criarIssue(fields) {
+    const r = await req('/rest/api/3/issue', { method: 'POST', body: { fields } });
+    return { chave: r.key, url: `${base}/browse/${r.key}` };
+  }
+
+  // Anexa arquivos: [{ nome, conteudo: Buffer, tipo }]
+  async function anexar(chave, arquivos) {
+    if (!arquivos.length) return [];
+    const form = new FormData();
+    arquivos.forEach(a => form.append('file', new Blob([a.conteudo], { type: a.tipo || 'application/octet-stream' }), a.nome));
+    return req(`/rest/api/3/issue/${encodeURIComponent(chave)}/attachments`, { method: 'POST', body: form, headers: { 'X-Atlassian-Token': 'no-check' } });
+  }
+
+  async function issueExiste(chave) {
+    const i = await issueBruta(chave, 'summary,issuetype,parent');
+    return { chave: i.key, titulo: i.fields.summary, tipo: i.fields.issuetype && i.fields.issuetype.name, pai: i.fields.parent ? i.fields.parent.key : null, url: `${base}/browse/${i.key}` };
+  }
+
+  return { site: base, req, eu, historia, subtarefa, minhasSubtarefas, atualizarDescricao, tipoSubFalha, prioridades, criarIssue, anexar, issueExiste };
 }
 
 module.exports = { criarCliente, JiraErro, normalizarSite, CAMPOS_DESCRICAO };

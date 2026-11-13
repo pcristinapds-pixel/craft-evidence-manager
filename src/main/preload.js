@@ -35,6 +35,9 @@ contextBridge.exposeInMainWorld('api', {
   cenarioSalvar: (dados) => ipcRenderer.invoke('cenario-salvar', dados),
   cenarioNovo: (dados) => ipcRenderer.invoke('cenario-novo', dados),
   abrirLink: (url) => ipcRenderer.invoke('abrir-link', url),
+  subFalhaPreparar: (storyId, ct) => ipcRenderer.invoke('subfalha-preparar', { storyId, ct }),
+  subFalhaCriar: (dados) => ipcRenderer.invoke('subfalha-criar', dados),
+  subFalhaVincular: (storyId, ct, chave) => ipcRenderer.invoke('subfalha-vincular', { storyId, ct, chave }),
   
   // Comandos enviados pela barra flutuante
   sendPrintCmd: () => ipcRenderer.send('cmd-print'),

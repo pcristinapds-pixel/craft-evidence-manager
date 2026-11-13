@@ -70,7 +70,26 @@ function criarServico({ cliente, base, prefixo = '[QA]' }) {
     return { gravado: true, subtarefa: subChave };
   }
 
-  return { carregarHistoria, escolherPlano, gravarCenarioNoJira };
+  // Quem pode receber a sub-falha: os responsáveis pelas sub-tasks da história.
+  // Sugere o dono da [FRONT] num teste de front-end e o da [BACK] num de back-end.
+  async function responsaveisSubFalha(storyId, tipoTeste) {
+    const h = await cliente.historia(storyId);
+    const subs = await Promise.all(h.subtarefas.filter(s => !ehPrefixo(s.titulo, prefixo)).map(async s => {
+      try { const d = await cliente.subtarefa(s.chave); return { ...s, responsavel: d.responsavel }; } catch { return null; }
+    }));
+    const opcoes = [];
+    subs.filter(s => s && s.responsavel).forEach(s => {
+      const marca = (s.titulo.match(/^\[([^\]]+)\]/) || [])[1] || s.chave;
+      const ja = opcoes.find(o => o.accountId === s.responsavel.accountId);
+      const rotulo = `dono da [${marca}] ${s.chave}`;
+      if (ja) ja.rotulos.push(rotulo); else opcoes.push({ accountId: s.responsavel.accountId, nome: s.responsavel.nome, rotulos: [rotulo], marca: marca.toUpperCase() });
+    });
+    const alvo = tipoTeste === 'back' ? 'BACK' : 'FRONT';
+    const sugerido = (opcoes.find(o => o.marca === alvo) || {}).accountId || null;
+    return { opcoes: opcoes.map(o => ({ accountId: o.accountId, nome: o.nome, rotulo: o.rotulos.join(', ') })), sugerido };
+  }
+
+  return { carregarHistoria, escolherPlano, gravarCenarioNoJira, responsaveisSubFalha };
 }
 
 module.exports = { criarServico };

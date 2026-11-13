@@ -12,6 +12,7 @@ const { criarCliente, normalizarSite } = require('./jira');
 const { criarServico } = require('./jira-servico');
 const credenciais = require('./credenciais');
 const { montarVisao } = require('./visao');
+const subfalha = require('./subfalha');
 
 const store = new Store();
 
@@ -476,3 +477,50 @@ ipcMain.handle('abrir-link', (event, url) => {
   if (ok) shell.openExternal(url);
   return ok;
 });
+
+// ---------------- Sub-falha ----------------
+const jpegRelatorio = arq => 'data:image/jpeg;base64,' + nativeImage.createFromPath(arq).toJPEG(85).toString('base64');
+function atualizarRelatorio(storyId) {
+  try { gerarRelatorio(pastaEvidencias(), storyId, { jiraBaseUrl: store.get('jiraUrl'), logoPath: LOGO, imagemParaDataUrl: jpegRelatorio }); }
+  catch (e) { console.error('Relatório não atualizado:', e); }
+}
+function contextoFalha(storyId, ct) {
+  const base = pastaEvidencias();
+  const cen = evidencias.lerCenario(base, storyId, ct);
+  if (!cen || !cen.execucoes.length) throw new Error(`Não encontrei execuções do ${ct}.`);
+  const ex = cen.execucoes[cen.execucoes.length - 1];
+  const visao = montarVisao(base, storyId);
+  const v = visao.cenarios.find(c => c.ct === ct);
+  const caminhoBug = path.join(evidencias.pastaHistoria(base, storyId), 'Bugs', nomeBug(storyId, ct, ex.execucao));
+  return { base, ex, visao, v, caminhoBug };
+}
+
+ipcMain.handle('subfalha-preparar', (event, { storyId, ct }) => responder(async () => {
+  const { base, ex, visao, v, caminhoBug } = contextoFalha(storyId, ct);
+  const criterios = visao.efetivos.filter(c => (v ? v.cobre : ex.criterios || []).includes(c.id));
+  const form = subfalha.sugerirFormulario({ dados: { titulo: ex.titulo, bdd: ex.bdd, observacao: ex.observacao }, execucao: ex, criterios });
+  const evs = subfalha.evidenciasDisponiveis(base, storyId, ct, ex, caminhoBug).map(({ caminho, ...e }) => e);
+  let prioridades = [], responsaveis = { opcoes: [], sugerido: null }, avisoJira = null;
+  try {
+    const cli = clienteJira();
+    [prioridades, responsaveis] = await Promise.all([cli.prioridades(), servicoJira().responsaveisSubFalha(storyId, ex.tipo)]);
+  } catch (e) { avisoJira = { erro: e.message, tipo: e.tipo || 'erro' }; }
+  return { form, evidencias: evs, prioridades, responsaveis, execucao: ex.execucao, subFalha: ex.subFalha || null, avisoJira };
+}));
+
+ipcMain.handle('subfalha-criar', (event, { storyId, ct, form, anexos }) => responder(async () => {
+  const { base, ex, visao, caminhoBug } = contextoFalha(storyId, ct);
+  const escolhidos = subfalha.evidenciasDisponiveis(base, storyId, ct, ex, caminhoBug).filter(e => (anexos || []).includes(e.id));
+  const projeto = (visao.jira && visao.jira.projeto && visao.jira.projeto.chave) || String(storyId).split('-')[0];
+  const r = await subfalha.criarSubFalha({ cliente: clienteJira(), base, storyId, ct, execucao: ex, form, anexos: escolhidos, projeto });
+  atualizarRelatorio(storyId);
+  return r;
+}));
+
+ipcMain.handle('subfalha-vincular', (event, { storyId, ct, chave }) => responder(async () => {
+  const { base, ex } = contextoFalha(storyId, ct);
+  const issue = await clienteJira().issueExiste(chave);
+  subfalha.registrarSubFalha(base, storyId, ct, ex.execucao, issue);
+  atualizarRelatorio(storyId);
+  return issue;
+}));

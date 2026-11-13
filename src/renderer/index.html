@@ -94,6 +94,7 @@
     <div class="card">
       <h3>Informações do Caso de Teste</h3>
       <div id="resumoHistoria" class="resumo-historia hidden"></div>
+      <div id="avisoSubFalha" class="aviso-amarelo hidden" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px"></div>
       <div class="tipo-teste">
         <label>Tipo de teste</label>
         <div class="seg" id="tipoTeste" role="group" aria-label="Tipo de teste">
@@ -381,6 +382,52 @@
       <div class="modal-actions">
         <button id="mcAdicionar" class="btn-primary">Adicionar ao plano</button>
         <button id="mcCancelar" class="btn-secondary">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalSubFalha" class="modal hidden">
+    <div class="modal-content modal-subfalha" role="dialog" aria-labelledby="sfPergunta">
+      <div class="sf-topo">
+        <div>
+          <span id="sfCt" class="sf-ct"></span>
+          <h3 id="sfPergunta" style="border:0;margin:0;padding:0">Quer abrir uma sub-falha?</h3>
+          <span class="opcional">O app preencheu o modelo com o que você registrou no teste. Revise e complete o que falta.</span>
+        </div>
+        <button id="sfFechar" class="btn-small" aria-label="Fechar" style="background:transparent">✕</button>
+      </div>
+      <div id="sfAviso" class="aviso-erro hidden"></div>
+      <div class="sf-corpo">
+        <div class="sf-form">
+          <div class="form-group"><label for="sfTitulo">Título *</label><input id="sfTitulo" type="text"></div>
+          <div class="form-group"><label for="sfDescricao">Descrição <span class="opcional">da observação do teste</span></label><textarea id="sfDescricao" rows="2"></textarea></div>
+          <div class="form-group"><label for="sfPassos">Passos para reproduzir <span class="opcional">do BDD e das legendas dos prints</span></label><textarea id="sfPassos" rows="4"></textarea></div>
+          <div class="sf-duas">
+            <div class="form-group"><label for="sfEsperado">Resultado esperado <span class="opcional">do "Then"</span></label><textarea id="sfEsperado" rows="2"></textarea></div>
+            <div class="form-group"><label for="sfAtual">Resultado atual <span class="opcional">da observação</span></label><textarea id="sfAtual" rows="2"></textarea></div>
+          </div>
+          <div class="form-group"><label for="sfCriterio">Critério de aceite impactado <span class="opcional">dos critérios que o CT cobre</span></label><textarea id="sfCriterio" rows="1"></textarea></div>
+          <div class="form-group"><label for="sfImpacto">Impacto * <span class="opcional" style="color:#9A3412">preencha</span></label><textarea id="sfImpacto" rows="2" placeholder="Funcionalidades afetadas:&#10;Usuários impactados:" class="destaque"></textarea></div>
+        </div>
+        <aside class="sf-lado">
+          <div class="form-group"><label for="sfResponsavel">Responsável</label><select id="sfResponsavel"></select><span id="sfRespDica" class="opcional"></span></div>
+          <div class="sf-duas">
+            <div class="form-group"><label for="sfSeveridade">Severidade *</label><select id="sfSeveridade"><option>Baixo</option><option>Médio</option><option selected>Alto</option><option>Crítico</option></select></div>
+            <div class="form-group"><label for="sfPrioridade">Prioridade *</label><select id="sfPrioridade"></select></div>
+          </div>
+          <span class="rotulo">Evidências que vão junto</span>
+          <div id="sfEvidencias" class="sf-evidencias"></div>
+          <p class="opcional" style="margin:0">Nos testes de back-end, o cURL (sem segredos) entra em "Evidências" como bloco de código.</p>
+          <div class="sf-info" id="sfInfo"></div>
+        </aside>
+      </div>
+      <div class="sf-rodape">
+        <span class="acoes-esq">
+          <button id="sfAgoraNao" class="btn-secondary">Agora não</button>
+          <button id="sfVincularAbrir" class="btn-link" style="font-size:13px">Vincular a uma sub-falha existente</button>
+          <span id="sfVincularLinha" class="hidden"><input id="sfVincularChave" type="text" placeholder="Ex.: POR-7146" style="width:140px"> <button id="sfVincular" class="btn-small btn-navy">Vincular</button></span>
+        </span>
+        <button id="sfCriar" class="btn-primary">Criar sub-falha no Jira</button>
       </div>
     </div>
   </div>

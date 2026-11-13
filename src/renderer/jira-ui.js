@@ -224,7 +224,7 @@ function renderAside() {
     <button class="item-ct ${c.ct === J.ctAtual ? 'ativo' : ''}" data-ct="${escJ(c.ct)}" title="${escJ(c.titulo)}">
       <span class="ct">${escJ(c.ct)}</span><span class="tit">${escJ(c.titulo)}</span>
       ${c.editado || c.conflito ? `<span class="ponto" title="${c.conflito ? 'Mudou no Jira e no app' : 'Editado, ainda não salvo no Jira'}"></span>` : ''}
-      ${pillStatus(c.status)}</button>`).join('') : '<span class="opcional">Sem cenários. Use "+ Escrever cenário" nos critérios.</span>';
+      ${pillStatus(c.status)}${c.status === 'Falhou' && !c.subFalha && J.visao.jira ? '<span class="pill bloqueado" title="Falhou e ainda não tem sub-falha no Jira">sem sub-falha</span>' : ''}</button>`).join('') : '<span class="opcional">Sem cenários. Use "+ Escrever cenário" nos critérios.</span>';
   $j('planoLista').querySelectorAll('[data-ct]').forEach(b => b.onclick = () => selecionarCT(b.dataset.ct));
 
   // critérios
@@ -329,6 +329,7 @@ async function jiraAposCarregar(story, ct, info) {
   mostrarConflito(c);
   atualizarBarraEdicao();
   renderAside();
+  mostrarAvisoSubFalha();
 }
 
 function mostrarConflito(c) {
@@ -441,6 +442,100 @@ async function jiraAposGerar(res, dados) {
     J.visao = { ...r.dados, escolhaPlano: J.visao && J.visao.escolhaPlano };
     renderAside();
   }
+  // teste falhou numa história do Jira: pergunta se quer abrir a sub-falha
+  if (dados.status === 'Falhou' && jiraConfigurado() && J.visao && J.visao.jira) await abrirSubFalha(dados.storyId, dados.testCaseId);
+}
+
+// ---------------------------------------------------------------- sub-falha
+
+const SF = { storyId: null, ct: null, resolver: null };
+function fecharSubFalha() {
+  $j('modalSubFalha').classList.add('hidden');
+  if (SF.resolver) { SF.resolver(); SF.resolver = null; }
+}
+
+// Abre o formulário preenchido. Devolve uma Promise que termina quando o modal fecha.
+async function abrirSubFalha(storyId, ct) {
+  const r = await window.api.subFalhaPreparar(storyId, ct);
+  if (!r.ok) { erroJira(r, 'Sub-falha'); return; }
+  const d = r.dados;
+  if (d.subFalha) return; // essa execução já tem sub-falha
+  Object.assign(SF, { storyId, ct });
+  const f = d.form;
+  $j('sfCt').textContent = `${ct} falhou`;
+  $j('sfPergunta').textContent = `Quer abrir uma sub-falha na ${storyId}?`;
+  $j('sfTitulo').value = f.titulo; $j('sfDescricao').value = f.descricao; $j('sfPassos').value = f.passos;
+  $j('sfEsperado').value = f.esperado; $j('sfAtual').value = f.atual; $j('sfCriterio').value = f.criterio; $j('sfImpacto').value = '';
+  $j('sfSeveridade').value = f.severidade || 'Alto';
+  const ops = d.responsaveis.opcoes;
+  $j('sfResponsavel').innerHTML = '<option value="">Sem responsável</option>' + ops.map(o => `<option value="${escJ(o.accountId)}">${escJ(o.nome)}</option>`).join('');
+  $j('sfResponsavel').value = d.responsaveis.sugerido || '';
+  const dica = () => { const o = ops.find(x => x.accountId === $j('sfResponsavel').value); $j('sfRespDica').textContent = o ? o.rotulo : ''; };
+  $j('sfResponsavel').onchange = dica; dica();
+  $j('sfPrioridade').innerHTML = d.prioridades.map(p => `<option value="${escJ(p.id)}">${escJ(p.nome)}</option>`).join('') || '<option value="">Padrão do Jira</option>';
+  const alto = d.prioridades.find(p => /^alt[ao]$|^high$/i.test(p.nome));
+  if (alto) $j('sfPrioridade').value = alto.id;
+  $j('sfEvidencias').innerHTML = d.evidencias.length ? d.evidencias.map(e => `<label><input type="checkbox" data-ev="${escJ(e.id)}" checked> ${escJ(e.rotulo)}</label>`).join('') : '<span class="opcional">Sem prints ou vídeos nesta execução.</span>';
+  $j('sfInfo').innerHTML = `<span><b>Tipo:</b> Sub-falha</span><span><b>Pai:</b> ${escJ(storyId)}</span><span><b>Relator:</b> você</span><span><b>Execução:</b> ${d.execucao}ª</span>`;
+  const aviso = $j('sfAviso');
+  aviso.classList.toggle('hidden', !d.avisoJira);
+  if (d.avisoJira) aviso.innerHTML = d.avisoJira.tipo === 'token' ? '<span><b>O Jira recusou seu token de API.</b> Troque o token nas configurações para criar a sub-falha.</span>' : `<span>${escJ(d.avisoJira.erro)}</span>`;
+  $j('sfVincularLinha').classList.add('hidden'); $j('sfVincularChave').value = '';
+  $j('modalSubFalha').classList.remove('hidden');
+  $j('sfImpacto').focus();
+  return new Promise(res => { SF.resolver = res; });
+}
+
+$j('sfFechar').onclick = fecharSubFalha;
+$j('sfAgoraNao').onclick = fecharSubFalha;
+$j('sfVincularAbrir').onclick = () => { $j('sfVincularLinha').classList.remove('hidden'); $j('sfVincularChave').focus(); };
+$j('sfVincular').onclick = async () => {
+  const chave = $j('sfVincularChave').value.trim().toUpperCase();
+  if (!chave) return;
+  const r = await window.api.subFalhaVincular(SF.storyId, SF.ct, chave);
+  if (!r.ok) return erroJira(r, 'Vincular sub-falha');
+  await aposSubFalha(`${SF.ct} vinculado à ${r.dados.chave}.`);
+};
+$j('sfCriar').onclick = async () => {
+  if (!$j('sfTitulo').value.trim()) return window.api.showError('Campo obrigatório', 'Informe o título da sub-falha.');
+  if (!$j('sfImpacto').value.trim()) { $j('sfImpacto').focus(); return window.api.showError('Campo obrigatório', 'Preencha o impacto: funcionalidades afetadas e usuários impactados.'); }
+  const btn = $j('sfCriar'); btn.disabled = true; btn.textContent = 'Criando…';
+  const form = {
+    titulo: $j('sfTitulo').value, descricao: $j('sfDescricao').value, passos: $j('sfPassos').value,
+    esperado: $j('sfEsperado').value, atual: $j('sfAtual').value, criterio: $j('sfCriterio').value, impacto: $j('sfImpacto').value,
+    severidade: $j('sfSeveridade').value, prioridadeId: $j('sfPrioridade').value,
+    prioridadeNome: $j('sfPrioridade').selectedOptions[0] ? $j('sfPrioridade').selectedOptions[0].textContent : '',
+    responsavel: $j('sfResponsavel').value
+  };
+  const anexos = [...document.querySelectorAll('#sfEvidencias [data-ev]:checked')].map(i => i.dataset.ev);
+  const r = await window.api.subFalhaCriar({ storyId: SF.storyId, ct: SF.ct, form, anexos });
+  btn.disabled = false; btn.textContent = 'Criar sub-falha no Jira';
+  if (!r.ok) {
+    if (erroJira(r, 'Criar sub-falha')) window.api.showError('Token de API recusado', 'A sub-falha não foi criada. Troque o token nas configurações e tente de novo pelo aviso do CT.');
+    return;
+  }
+  await aposSubFalha(`Sub-falha ${r.dados.chave} criada na ${SF.storyId}.` + (r.dados.anexosErro ? `\n\nAtenção: os anexos não foram enviados (${r.dados.anexosErro}). Anexe pelo Jira.` : ''), r.dados.url);
+};
+
+async function aposSubFalha(msg, url) {
+  fecharSubFalha();
+  const r = await window.api.historiaLocal(SF.storyId);
+  if (r.ok) { J.visao = { ...r.dados, escolhaPlano: J.visao && J.visao.escolhaPlano }; renderAside(); mostrarAvisoSubFalha(); }
+  if (url) {
+    const i = await window.api.ask({ titulo: 'Sub-falha', mensagem: msg, botoes: ['Abrir no Jira', 'OK'], cancelar: 1 });
+    if (i === 0) window.api.abrirLink(url);
+  } else window.api.showMessage('Sub-falha', msg);
+}
+
+// CT que falhou e ficou sem sub-falha ("Agora não"): aviso com o botão para abrir depois
+function mostrarAvisoSubFalha() {
+  const el = $j('avisoSubFalha');
+  const c = J.visao && J.visao.cenarios.find(x => x.ct === J.ctAtual);
+  const mostrar = !!(c && c.status === 'Falhou' && !c.subFalha && jiraConfigurado() && J.visao.jira);
+  el.classList.toggle('hidden', !mostrar);
+  if (!mostrar) return;
+  el.innerHTML = `<span><b>${escJ(c.ct)} falhou</b> e ainda não tem sub-falha no Jira.</span><button type="button" class="btn-small btn-navy" id="btnAbrirSubFalha">Abrir sub-falha</button>`;
+  $j('btnAbrirSubFalha').onclick = () => abrirSubFalha(J.visao.id, c.ct);
 }
 
 // ---------------------------------------------------------------- conferência dos critérios
