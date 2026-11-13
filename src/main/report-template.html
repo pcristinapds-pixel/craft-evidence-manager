@@ -129,6 +129,27 @@
   .vazio { text-align: center; padding: 60px 0; color: var(--cinza); display: none; }
   .rodape { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--linha); font-size: 12px; color: var(--cinza-2); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .oculto { display: none !important; }
+  /* plano, cobertura e histórico de falhas */
+  .chips-cab { display: flex; gap: 8px; flex-wrap: wrap; margin: -6px 0 18px; font-size: 13px; }
+  .chips-cab span { background: var(--bloco); border-radius: 4px; padding: 2px 8px; }
+  .cobertura { margin: 28px 0 8px; }
+  .cob-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+  .cob-cab span { font-size: 12px; color: var(--cinza); }
+  .cob-lista { border-top: 1px solid var(--linha); font-size: 14px; }
+  .cob-grupo { padding: 12px 0 4px; font-size: 12px; font-weight: 600; color: var(--tinta); }
+  .cob-item { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--bloco); align-items: baseline; }
+  .cob-item > b { font: 500 12px 'JetBrains Mono', monospace; color: var(--cinza); }
+  .cob-item.sem { background: var(--bloq-f); margin: 2px -8px; padding: 8px; border-radius: 4px; border-bottom: 0; }
+  .cob-item.sem > b, .cob-item .falta { color: var(--bloq); font-weight: 600; }
+  .cob-item.nsa { color: var(--cinza); }
+  .cob-cts { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 12px; color: var(--texto); }
+  .cob-cts code { font: 500 12px 'JetBrains Mono', monospace; margin-right: 4px; }
+  .cobre { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; margin: -8px 0 18px; color: var(--cinza); }
+  .cobre code { font: 500 12px 'JetBrains Mono', monospace; background: var(--bloco); border-radius: 4px; padding: 1px 6px; color: var(--tinta); }
+  .falhas { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; border: 1px solid #FDE68A; background: var(--bloq-f); border-radius: 6px; padding: 9px 14px; font-size: 14px; color: #92400E; margin-bottom: 14px; }
+  .falhas span { font-size: 13px; }
+  .tag-falhas { font-size: 12px; color: #92400E; background: var(--bloq-f); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+  .pendente-plano { font-size: 14px; color: var(--cinza); margin: 0 0 14px; }
   /* textos longos sem espaço (legendas, BDD, observação) quebram dentro da página */
   .folha, .folha * { overflow-wrap: anywhere; }
   .grade > *, .cenario, .ev { min-width: 0; }
@@ -170,6 +191,7 @@
         <h1 id="titulo"></h1>
       </div>
     </div>
+    <div class="chips-cab" id="chipsCab"></div>
     <div class="meta" id="meta"></div>
     <div class="resumo" id="resumo"></div>
   </header>
@@ -177,7 +199,7 @@
   <div class="busca" role="search">
     <label class="campo-busca">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="Pesquisar em cenários, BDD, endpoints, legendas…" aria-label="Pesquisar no relatório">
+      <input id="q" type="search" placeholder="Pesquisar em cenários, BDD, critérios, legendas…" aria-label="Pesquisar no relatório">
       <kbd>/</kbd>
     </label>
     <div class="filtros" id="fTipo">
@@ -185,9 +207,16 @@
       <button class="filtro" data-v="front">Front-end</button>
       <button class="filtro" data-v="back">Back-end</button>
     </div>
+    <div class="filtros" id="fNatureza">
+      <button class="filtro ativo" data-v="">Todos</button>
+      <button class="filtro" data-v="positivo">Positivo</button>
+      <button class="filtro" data-v="negativo">Negativo</button>
+    </div>
     <div class="filtros" id="fStatus"></div>
     <div class="contagem" id="contagem" aria-live="polite"></div>
   </div>
+
+  <section class="cobertura oculto" id="cobertura" aria-label="Cobertura dos critérios de aceite"></section>
 
   <nav class="sumario" aria-label="Cenários">
     <h2>Cenários</h2>
@@ -230,13 +259,21 @@ const link = D.historia.link ? `<a href="${esc(D.historia.link)}" target="_blank
 $('titulo').innerHTML = link + (D.historia.titulo ? ` <span style="font-weight:400;color:var(--cinza-2)">–</span> ${esc(D.historia.titulo)}` : '');
 $('fStatus').innerHTML = '<button class="filtro ativo" data-v="">Todos</button>' +
   ['Passou', 'Falhou', 'Bloqueado', 'Não executado'].filter(s => D.cenarios.some(c => c.status === s)).map(s => `<button class="filtro" data-v="${s}">${s}</button>`).join('');
-if (!D.cenarios.some(c => c.tipo === 'back') || !D.cenarios.some(c => c.tipo !== 'back')) $('fTipo').classList.add('oculto');
+if (!D.cenarios.some(c => c.tipo === 'back') || !D.cenarios.some(c => c.tipo && c.tipo !== 'back')) $('fTipo').classList.add('oculto');
+$('chipsCab').innerHTML = [D.projeto, D.plano && `Plano: ${D.plano.subtarefa}${D.plano.lidoEm ? ' · lido em ' + new Date(D.plano.lidoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' às') : ''}`]
+  .filter(Boolean).map(t => `<span>${esc(t)}</span>`).join('');
+if (!$('chipsCab').innerHTML) $('chipsCab').classList.add('oculto');
+const temNatureza = D.cenarios.some(c => c.natureza);
+if (!temNatureza) $('fNatureza').classList.add('oculto');
 $('meta').innerHTML = [[D.responsaveis.length > 1 ? 'Responsáveis' : 'Responsável', D.responsaveis.join(', ')], ['Período', D.periodo], ['Ambiente', D.ambiente], ['Versão', D.versao]]
   .map(([r, v]) => `<div><span>${r}</span><b>${esc(v)}</b></div>`).join('');
 const cont = s => D.cenarios.filter(c => c.status === s).length;
 $('resumo').innerHTML = `<span><b>${D.cenarios.length}</b> ${D.rotuloItens || 'cenários'}</span>` +
   ['Passou', 'Falhou', 'Bloqueado', 'Não executado'].filter(cont).map(s => `<span><i class="ponto" style="background:${COR[s]}"></i><b>${cont(s)}</b> ${s.toLowerCase()}</span>`).join('') +
-  [['front', 'front-end'], ['back', 'back-end']].map(([t, n]) => { const q = D.cenarios.filter(c => (c.tipo === 'back' ? 'back' : 'front') === t).length; return q ? `<span><b>${q}</b> ${n}</span>` : ''; }).join('');
+  [['front', 'front-end'], ['back', 'back-end']].map(([t, n]) => { const q = D.cenarios.filter(c => c.tipo && (c.tipo === 'back' ? 'back' : 'front') === t).length; return q ? `<span><b>${q}</b> ${n}</span>` : ''; }).join('') +
+  (() => { const q = D.cenarios.filter(c => c.falhasAntes && c.falhasAntes.length).length; return q ? `<span><b>${q}</b> passou após falha</span>` : ''; })() +
+  (temNatureza ? `<span><b>${D.cenarios.filter(c => c.natureza === 'positivo').length}</b> positivo${D.cenarios.filter(c => c.natureza === 'positivo').length === 1 ? '' : 's'} · <b>${D.cenarios.filter(c => c.natureza === 'negativo').length}</b> negativo${D.cenarios.filter(c => c.natureza === 'negativo').length === 1 ? '' : 's'}</span>` : '') +
+  (D.cobertura ? `<span><b>${D.cobertura.cobertos} de ${D.cobertura.total - D.cobertura.naoSeAplica}</b> critérios cobertos</span>` : '');
 $('gerado').textContent = (D.simples ? 'Gerado em ' : 'Atualizado em ') + D.atualizadoEm;
 if (D.simples) ['resumo'].forEach(id => $(id).classList.add('oculto'));
 if (D.simples) document.querySelectorAll('.busca, .sumario').forEach(el => el.classList.add('oculto'));
@@ -322,15 +359,38 @@ function grade(evs, rotulo) {
     return `<figure class="ev"><button data-lb="${i}" aria-label="Ampliar: ${esc(e.legenda)}"><img src="${e.src}" alt="${esc(e.legenda)}" loading="lazy"></button><figcaption><b>Passo ${e.passo}</b> ${esc(e.legenda || '')}</figcaption></figure>`;
   }).join('') + `</div>`;
 }
+const NATUREZA = { positivo: 'Positivo', negativo: 'Negativo' };
+const tipoTxt = c => [c.tipo ? (c.tipo === 'back' ? 'Back-end' : 'Front-end') : '', NATUREZA[c.natureza] || ''].filter(Boolean).join(' · ');
+const vezes = n => `${n} ${n === 1 ? 'vez' : 'vezes'}`;
+function renderCobertura() {
+  const cob = D.cobertura;
+  if (!cob || !cob.criterios.length) return;
+  const grupos = [];
+  cob.criterios.forEach(c => { const g = grupos.find(x => x.nome === c.grupo); g ? g.itens.push(c) : grupos.push({ nome: c.grupo, itens: [c] }); });
+  const linha = c => {
+    const cls = c.naoSeAplica ? 'nsa' : (c.cts.length ? '' : 'sem');
+    const baixo = c.naoSeAplica ? `<span>Não se aplica · ${esc(c.naoSeAplica)}</span>`
+      : c.cts.length ? c.cts.map(x => `<span><i class="ponto" style="background:${COR[x.status] || COR['Não executado']}"></i><code>${esc(x.ct)}</code>${esc(x.status)}</span>`).join('')
+      : '<span class="falta">Sem cenário</span>';
+    return `<div class="cob-item ${cls}"><b>${esc(c.id)}</b><div><div>${esc(c.texto)}</div><div class="cob-cts">${baixo}</div></div></div>`;
+  };
+  $('cobertura').innerHTML = `<div class="cob-cab"><h2 class="sec-tit" style="margin:0">Cobertura dos critérios de aceite</h2><span>${cob.cobertos} cobertos · ${cob.naoSeAplica} não se aplica · ${cob.semCenario} sem cenário</span></div>
+    <div class="cob-lista">${grupos.map(g => (g.nome ? `<div class="cob-grupo">${esc(g.nome)}</div>` : '') + g.itens.map(linha).join('')).join('')}</div>`;
+  $('cobertura').classList.remove('oculto');
+}
 function render() {
+  renderCobertura();
   $('sumario').innerHTML = D.cenarios.map(c =>
-    `<li data-id="${c.id || c.ct}"><a href="#${slug(c.id || c.ct)}"><span class="ct">${esc(c.ct)}</span><span class="tit">${esc(c.titulo)}</span><span class="tipo">${c.tipo === 'back' ? 'Back-end' : 'Front-end'}</span><i class="ponto" style="background:${COR[c.status]}" title="${esc(c.status)}"></i></a></li>`).join('');
+    `<li data-id="${c.id || c.ct}"><a href="#${slug(c.id || c.ct)}"><span class="ct">${esc(c.ct)}</span><span class="tit">${esc(c.titulo)}${c.falhasAntes && c.falhasAntes.length ? `<span class="tag-falhas">falhou ${vezes(c.falhasAntes.length)} antes</span>` : ''}</span><span class="tipo">${esc(tipoTxt(c))}</span><i class="ponto" style="background:${COR[c.status]}" title="${esc(c.status)}"></i></a></li>`).join('');
 
   $('cenarios').innerHTML = D.cenarios.map(c => {
     let h = `<section class="cenario" id="${slug(c.id || c.ct)}" data-id="${c.id || c.ct}">
       <div class="cen-topo"><h2>${esc(c.ct)} – ${esc(c.titulo)}</h2><span class="status ${STATUS[c.status] || 's-nao-executado'}">${esc(c.status)}</span></div>
-      <div class="cen-meta"><span>${c.tipo === 'back' ? 'Back-end' : 'Front-end'}</span><span>${esc(c.responsavel)}</span><span>${esc(c.data)}</span>${c.execucao > 1 ? `<span>${c.execucao}ª execução</span>` : ''}${c.linkBug ? `<span><a class="link-acao" style="display:inline" href="${esc(c.linkBug)}">Relatório do bug</a></span>` : ''}</div>
-      <div class="bdd">${bdd(c.bdd)}</div>`;
+      <div class="cen-meta">${[c.tipo ? (c.tipo === 'back' ? 'Back-end' : 'Front-end') : '', NATUREZA[c.natureza] || '', c.responsavel || '', c.data || ''].filter(Boolean).map(t => `<span>${esc(t)}</span>`).join('')}${c.execucao > 1 ? `<span>${c.execucao}ª execução</span>` : ''}${c.subFalha && c.subFalha.chave ? `<span>${c.subFalha.url ? `<a class="link-acao" style="display:inline" href="${esc(c.subFalha.url)}" target="_blank" rel="noopener">Sub-falha ${esc(c.subFalha.chave)}</a>` : 'Sub-falha ' + esc(c.subFalha.chave)}</span>` : ''}${c.linkBug ? `<span><a class="link-acao" style="display:inline" href="${esc(c.linkBug)}">Relatório do bug</a></span>` : ''}</div>
+      ${(c.cobre && c.cobre.length) || c.origem ? `<div class="cobre">${c.cobre && c.cobre.length ? 'Cobre: ' + c.cobre.map(x => `<code>${esc(x)}</code>`).join(' ') : ''}${c.origem ? `<span style="margin-left:8px">Origem: ${esc(c.origem)}</span>` : ''}</div>` : ''}
+      ${c.falhasAntes && c.falhasAntes.length ? `<div class="falhas"><b>Este cenário falhou ${vezes(c.falhasAntes.length)} antes do sucesso.</b><span>${c.falhasAntes.map(f => `${f.execucao}ª execução em ${esc(f.data)}: Falhou${f.subFalha && f.subFalha.chave ? ' · Sub-falha ' + esc(f.subFalha.chave) : ''}`).join(' · ')}${D.linkHistorico ? ` · <a href="${esc(D.linkHistorico)}" style="color:inherit">Ver histórico</a>` : ''}</span></div>` : ''}
+      ${c.naoExecutado ? '<p class="pendente-plano">Está no plano e ainda não tem evidência.</p>' : ''}
+      ${c.bdd ? `<div class="bdd">${bdd(c.bdd)}</div>` : ''}`;
     if (c.observacao) h += `<div class="obs"><b>Observação:</b> ${esc(c.observacao)}</div>`;
     if (c.api && (c.api.curl || c.api.collection)) {
       const a = c.api;
@@ -353,6 +413,7 @@ function render() {
   // texto pesquisável de cada cenário (inclui cURL, resposta e legendas)
   D.cenarios.forEach(c => {
     c._busca = [c.ct, c.titulo, c.status, c.tipo === 'back' ? 'back-end backend api' : 'front-end frontend tela', c.responsavel, c.data, c.bdd, c.observacao,
+      NATUREZA[c.natureza], ...(c.cobre || []), c.origem,
       c.api && c.api.curl, ...(c.evidencias || []).map(e => e.legenda),
       ...(c.historico || []).flatMap(x => [x.status, x.observacao, x.data, ...(x.evidencias || []).map(e => e.legenda)])].join(' \n ').toLowerCase();
   });
@@ -363,7 +424,7 @@ const originais = new Map();
 document.querySelectorAll('.cenario .bdd, .cenario h2, .cenario .obs, .cenario pre, .cenario figcaption').forEach(el => originais.set(el, el.innerHTML));
 
 // ---------- busca e filtros ----------
-let fTipo = '', fStatus = '';
+let fTipo = '', fStatus = '', fNatureza = '';
 function marcar(el, termo) {
   const orig = originais.get(el);
   if (!termo) { el.innerHTML = orig; return; }
@@ -375,16 +436,16 @@ function filtrar() {
   const t = termo.toLowerCase();
   let n = 0;
   D.cenarios.forEach(c => {
-    const ok = (!t || c._busca.includes(t)) && (!fTipo || c.tipo === fTipo) && (!fStatus || c.status === fStatus);
+    const ok = (!t || c._busca.includes(t)) && (!fTipo || c.tipo === fTipo) && (!fStatus || c.status === fStatus) && (!fNatureza || c.natureza === fNatureza);
     document.querySelectorAll(`[data-id="${c.id || c.ct}"]`).forEach(el => el.classList.toggle('oculto', !ok));
     if (ok) n++;
   });
   originais.forEach((_, el) => marcar(el, termo));
-  $('contagem').textContent = (t || fTipo || fStatus) ? `${n} de ${D.cenarios.length} cenários` : '';
+  $('contagem').textContent = (t || fTipo || fStatus || fNatureza) ? `${n} de ${D.cenarios.length} cenários` : '';
   $('vazio').style.display = n ? 'none' : 'block';
 }
 $('q').addEventListener('input', filtrar);
-[['fTipo', v => fTipo = v], ['fStatus', v => fStatus = v]].forEach(([id, set]) =>
+[['fTipo', v => fTipo = v], ['fStatus', v => fStatus = v], ['fNatureza', v => fNatureza = v]].forEach(([id, set]) =>
   $(id).querySelectorAll('.filtro').forEach(b => b.onclick = () => {
     $(id).querySelectorAll('.filtro').forEach(x => x.classList.toggle('ativo', x === b));
     set(b.dataset.v); filtrar();

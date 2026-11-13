@@ -25,7 +25,7 @@ const telas = ['screenMinhas', 'screenSetup', 'screenReview', 'screenConferir'];
 function mostrarTela(id) { telas.forEach(t => $j(t).classList.toggle('hidden', t !== id)); window.scrollTo(0, 0); }
 
 // positivo/negativo sugerido pelo texto (mesma regra do processo principal)
-const NEGATIVO_UI = /\b(nao|nenhum|nenhuma|sem|erro|invalid[oa]s?|bloquead[oa]s?|recusad[oa]s?|negad[oa]s?|falha|impedi[rd]|inexistente|vencid[oa]|expirad[oa]|inelegivel|not|no|without|error|invalid|denied|blocked|fail)\b/;
+const NEGATIVO_UI = /\b(nao|nenhum|nenhuma|sem|erro|invalid[oa]s?|bloquead[oa]s?|recusad[oa]s?|negad[oa]s?|falha|impedi[rd]|inexistente|vencid[oa]|expirad[oa]|inelegivel|not|without|error|invalid|denied|blocked|fail)\b/;
 const semAcento = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const sugerirNaturezaUI = bdd => NEGATIVO_UI.test(semAcento(bdd)) ? 'negativo' : 'positivo';
 

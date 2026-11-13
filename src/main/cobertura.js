@@ -56,7 +56,7 @@ function sugerirCriterios(cenario, criterios, { limite = 0.3 } = {}) {
 }
 
 // ---- positivo ou negativo, sugerido pelo BDD (a pessoa confirma)
-const NEGATIVO = /\b(nao|nenhum|nenhuma|sem|erro|invalid[oa]s?|bloquead[oa]s?|recusad[oa]s?|negad[oa]s?|falha|impedi[rd]|inexistente|vencid[oa]|expirad[oa]|inelegivel|not|no|without|error|invalid|denied|blocked|fail)\b/;
+const NEGATIVO = /\b(nao|nenhum|nenhuma|sem|erro|invalid[oa]s?|bloquead[oa]s?|recusad[oa]s?|negad[oa]s?|falha|impedi[rd]|inexistente|vencid[oa]|expirad[oa]|inelegivel|not|without|error|invalid|denied|blocked|fail)\b/;
 function sugerirNatureza(bdd) {
   return NEGATIVO.test(sem(bdd)) ? 'negativo' : 'positivo';
 }

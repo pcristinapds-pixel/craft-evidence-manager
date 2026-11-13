@@ -10,7 +10,7 @@
 - **mascarar**: tokens, senhas, chaves de API e CPF viram variáveis no cURL
 - **bdd**: estrutura mínima Dado / Quando / Então (ou Given / When / Then)
 - **evidence-store**: execuções novas e substituídas, ordem dos CTs, back-end
-- **report-builder**: relatório, histórico separado, relatório de bug, limites de vídeo (50 MB / 100 MB), segurança do HTML
+- **report-builder**: relatório, histórico separado, relatório de bug, limites de vídeo (50 MB / 100 MB), segurança do HTML, cobertura dos critérios, CTs do plano não executados, falhas antes do sucesso
 - **adf**: conversão do texto do Jira (listas, subitens, citações de issue, réguas)
 - **jira**: cliente do Jira Cloud (token recusado, campos personalizados pelo nome, minhas sub-tasks)
 - **leitores**: critérios de aceite (lista, grupos, subitens, Gherkin, texto corrido), cenários da sub-task [QA], regras nos comentários

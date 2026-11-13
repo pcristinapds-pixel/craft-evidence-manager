@@ -152,3 +152,67 @@ test('collection anexada vai embutida para download', t => {
   assert.equal(c.nome, 'api.postman_collection.json');
   assert.equal(Buffer.from(c.url.split(',')[1], 'base64').toString(), '{"info":{"name":"API"}}');
 });
+
+// ---------------- plano do Jira, cobertura e falhas antes do sucesso
+const { lerCriterios, lerPlano } = require('../src/main/leitores');
+const { paraBlocos } = require('../src/main/adf');
+const F = require('./fixtures/adf');
+
+function historiaDoJira(base) {
+  store.salvarDadosJira(base, 'POR-6925', {
+    titulo: 'E-mail de Boas-vindas por Idioma', jira: { projeto: { chave: 'POR', nome: 'Portal do cliente' } },
+    criterios: lerCriterios(paraBlocos(F.POR_6925)),
+    plano: { subtarefa: 'POR-7132', cenarios: lerPlano(paraBlocos(F.POR_7132)) }
+  });
+  const ex = extra => cenario({ storyId: 'POR-6925', testCaseId: 'CT03', ...extra });
+  store.salvarExecucao(base, ex({ status: 'Falhou' }));
+  store.salvarExecucao(base, ex({ status: 'Bloqueado' }), 'nova');
+  store.salvarExecucao(base, ex({ status: 'Passou', natureza: 'positivo' }), 'nova');
+}
+
+test('relatório com plano do Jira: cobertura, CTs não executados, origem e falhas antes do sucesso', t => {
+  const base = pastaTemp(t);
+  historiaDoJira(base);
+  store.salvarAjustesCriterios(base, 'POR-6925', { naoSeAplica: { CA13: 'validação documental' } });
+  const arq = rb.gerarRelatorio(base, 'POR-6925');
+  const D = dadosDoRelatorio(arq);
+  assert.equal(D.projeto, 'Portal do cliente');
+  assert.equal(D.plano.subtarefa, 'POR-7132');
+  assert.deepEqual(D.cenarios.map(c => [c.ct, c.status]), [['CT01', 'Não executado'], ['CT02', 'Não executado'], ['CT03', 'Passou'], ['CT04', 'Não executado']]);
+  const c3 = D.cenarios.find(c => c.ct === 'CT03');
+  assert.equal(c3.natureza, 'positivo');
+  assert.equal(c3.falhasAntes.length, 1, 'bloqueado não conta');
+  assert.equal(c3.falhasAntes[0].execucao, 1);
+  assert.ok(c3.cobre.includes('CA6'));
+  assert.equal(c3.origem, 'plano POR-7132, cenário 3');
+  const c4 = D.cenarios.find(c => c.ct === 'CT04');
+  assert.equal(c4.naoExecutado, true);
+  assert.match(c4.bdd, /Português/);
+  assert.deepEqual(c4.evidencias, []);
+  assert.equal(D.cobertura.total, 13);
+  assert.equal(D.cobertura.naoSeAplica, 1);
+  assert.equal(D.cobertura.criterios.find(c => c.id === 'CA13').naoSeAplica, 'validação documental');
+  assert.deepEqual(D.cobertura.criterios.find(c => c.id === 'CA6').cts.find(x => x.ct === 'CT03'), { ct: 'CT03', status: 'Passou' });
+  assert.ok(D.cobertura.criterios.filter(c => !c.cts.length && !c.naoSeAplica).length >= 4, 'cadastro e disparo sem cenário');
+});
+
+test('relatório sem dados do Jira continua igual (sem cobertura nem plano)', t => {
+  const base = pastaTemp(t);
+  store.salvarExecucao(base, cenario());
+  const D = dadosDoRelatorio(rb.gerarRelatorio(base, 'QMS-1036'));
+  assert.equal(D.cobertura, null);
+  assert.equal(D.plano, null);
+  assert.deepEqual(D.cenarios.map(c => c.ct), ['CT01']);
+  assert.equal(D.cenarios[0].falhasAntes.length, 0);
+});
+
+test('cenário criado no app para um critério mostra a origem', t => {
+  const base = pastaTemp(t);
+  historiaDoJira(base);
+  store.adicionarCenario(base, 'POR-6925', { titulo: 'Idioma padrão', bdd: 'Given sem idioma\nWhen enviado\nThen padrão', origem: 'criterio', origemDetalhe: 'CA12', criterios: ['CA12'] });
+  const D = dadosDoRelatorio(rb.gerarRelatorio(base, 'POR-6925'));
+  const c5 = D.cenarios.find(c => c.ct === 'CT05');
+  assert.match(c5.origem, /^criado no app para o CA12/);
+  assert.deepEqual(c5.cobre, ['CA12']);
+  assert.equal(c5.natureza, 'negativo', 'sugerido pelo BDD ("sem idioma")');
+});

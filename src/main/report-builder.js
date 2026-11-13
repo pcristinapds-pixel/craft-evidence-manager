@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const store = require('./evidence-store');
+const { montarVisao } = require('./visao');
 
 const TEMPLATE = path.join(__dirname, 'report-template.html');
 const MB = 1024 * 1024;
@@ -173,17 +174,50 @@ function gerarRelatorio(base, storyId, opts = {}) {
   } else if (fs.existsSync(arqHistorico)) fs.rmSync(arqHistorico);
 
   // ---- relatório (execução atual) ----
+  // plano, critérios e cobertura (quando a história veio do Jira)
+  const visao = montarVisao(base, storyId);
+  const porCt = Object.fromEntries(visao.cenarios.map(c => [c.ct, c]));
+  const subPlano = visao.plano && visao.plano.subtarefa;
+  const rotuloOrigem = v => {
+    if (!v) return '';
+    if (v.origem === 'plano') return subPlano ? `plano ${subPlano}, cenário ${Number(String(v.ct).replace(/\D/g, ''))}` : 'plano';
+    if (v.origem === 'criterio') return `criado no app para o ${v.origemDetalhe}` + (subPlano && !v.editado ? ` · gravado na ${subPlano}` : '');
+    if (v.origem === 'comentario') return `criado a partir do ${v.origemDetalhe}`;
+    return v.noPlano ? 'criado no app' : '';
+  };
+  const extras = (ct, ex, execucoes) => {
+    const v = porCt[ct];
+    const out = { natureza: (ex && ex.natureza) || (v && v.natureza) || null, cobre: v ? v.cobre : ((ex && ex.criterios) || []), origem: rotuloOrigem(v) };
+    // falhas antes do sucesso (Bloqueado não conta)
+    if (ex && ex.status === 'Passou') {
+      out.falhasAntes = execucoes.slice(0, -1).filter(x => x.status === 'Falhou').map(x => ({ execucao: x.execucao, data: x.data, subFalha: x.subFalha || null }));
+    }
+    if (ex && ex.subFalha) out.subFalha = ex.subFalha;
+    return out;
+  };
   const atuais = cenarios.map(c => c.execucoes[c.execucoes.length - 1]);
   const dadosRel = embutir => ({
     ...cabecalho(atuais),
     linkHistorico: temHistorico ? encodeURIComponent(nomeHistorico(storyId)) : '',
-    cenarios: cenarios.map(c => {
-      const ex = c.execucoes[c.execucoes.length - 1];
-      const i = item(c, ex, embutir);
-      const bug = path.join(dirHist, 'Bugs', nomeBug(storyId, c.ct, ex.execucao));
-      if (ehBug(ex.status) && fs.existsSync(bug)) i.linkBug = 'Bugs/' + encodeURIComponent(path.basename(bug));
-      return i;
-    })
+    plano: subPlano ? { subtarefa: subPlano, lidoEm: visao.plano.lidoEm } : null,
+    projeto: visao.jira && visao.jira.projeto ? visao.jira.projeto.nome : '',
+    cobertura: visao.criterios ? {
+      cobertos: visao.cobertura.cobertos, total: visao.cobertura.total, semCenario: visao.cobertura.semCenario, naoSeAplica: visao.cobertura.naoSeAplica,
+      criterios: visao.cobertura.criterios.map(c => ({ id: c.id, texto: c.texto, grupo: c.grupo, naoSeAplica: c.naoSeAplica || null, cts: c.cts }))
+    } : null,
+    cenarios: [
+      ...cenarios.map(c => {
+        const ex = c.execucoes[c.execucoes.length - 1];
+        const i = { ...item(c, ex, embutir), ...extras(c.ct, ex, c.execucoes) };
+        const bug = path.join(dirHist, 'Bugs', nomeBug(storyId, c.ct, ex.execucao));
+        if (ehBug(ex.status) && fs.existsSync(bug)) i.linkBug = 'Bugs/' + encodeURIComponent(path.basename(bug));
+        return i;
+      }),
+      // CTs do plano ainda sem evidência: aparecem como "Não executado"
+      ...visao.cenarios.filter(v => v.noPlano && !v.execucoes).map(v => ({
+        ct: v.ct, titulo: v.titulo, bdd: v.bdd, tipo: null, status: 'Não executado', naoExecutado: true, evidencias: [], ...extras(v.ct, null, [])
+      }))
+    ].sort((a, b) => a.ct.localeCompare(b.ct, 'pt-BR', { numeric: true }))
   });
   const html = montarComLimite({ pares: cenarios.map(c => [c, c.execucoes[c.execucoes.length - 1]]), gerar: dadosRel });
   const destino = gravar(path.join(dirHist, nomeRelatorio(storyId)), html);

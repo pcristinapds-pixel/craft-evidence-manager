@@ -61,6 +61,7 @@ test('positivo ou negativo sugerido pelo BDD', () => {
   assert.equal(C.sugerirNatureza('Quando informo CPF inválido\nEntão vejo erro'), 'negativo');
   assert.equal(C.sugerirNatureza('Then the button is blocked'), 'negativo');
   assert.equal(C.sugerirNatureza('Dado que estou na tela de semana'), 'positivo', '"sem" só conta como palavra inteira');
+  assert.equal(C.sugerirNatureza('Then o e-mail deve ser apresentado no mesmo idioma'), 'positivo', '"no" em português não é negação');
 });
 
 test('resumo da cobertura: cobertos, sem cenário e não se aplica', () => {
