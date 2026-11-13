@@ -124,4 +124,30 @@ const COMENTARIO_REGRA = doc(
 );
 const COMENTARIO_COMMIT = doc(p(forte('Commit registrado')), p('Commit: 98979f3'), p('Branch: jean.oliveira/feature/POR-6925'));
 
-module.exports = { t, p, h, li, ul, ol, rule, doc, forte, POR_6925, POR_7132, QMS_823, CNN_1935, COMENTARIO_REGRA, COMENTARIO_COMMIT };
+// QMS-1058 · plano em Gherkin com tags "@C07" e "Esquema do Cenário:" em parágrafos, sem réguas
+const QMS_1058 = doc(
+  p('Funcionalidade: Campos obrigatórios de coleta por país'),
+  p('@C07'),
+  p('Esquema do Cenário: Validação de Coleta no Brasil para Exportação (Cidade + Estado)'),
+  p('Dado que estou em um fluxo de exportação aérea EXW Door to Airport com coleta no Brasil'),
+  p('Quando seleciono o Estado e a Cidade da coleta'),
+  p('Então os campos Cidade e Estado devem ser os únicos rotulados como obrigatórios (*)'),
+  p('E a cotação deve ser gerada normalmente'),
+  p('@C08'),
+  p('Esquema do Cenário: Envio dos sinalizadores de Coleta na integração com o QMS'),
+  p('Dado que a cotação possui coleta ativada'),
+  p('Quando o portal consulta a disponibilidade de tarifas no QMS'),
+  p('Então o payload da requisição deve enviar obrigatoriamente hasPickup = true e hasDelivery = false'),
+  p('E incluir os dados do endereço de coleta com a sublocation correspondente'),
+  p('Exemplos:'),
+  p('| pais | campos |'),
+  p('| Brasil | Cidade, Estado |'),
+  p('@C09'),
+  p('Esquema do Cenário: Exibição de mensagem amigável para rotas sem tarifa de coleta'),
+  p('Dado que não existe tarifa cadastrada na base para a rota com coleta pesquisada'),
+  p('Quando concluo a etapa de carga'),
+  p('Então a cotação deve ser criada com sucesso'),
+  p('E a tela deve exibir a mensagem amigável informando ausência de rotas disponíveis, sem disparar erros genéricos de sistema (HTTP 404)')
+);
+
+module.exports = { QMS_1058, t, p, h, li, ul, ol, rule, doc, forte, POR_6925, POR_7132, QMS_823, CNN_1935, COMENTARIO_REGRA, COMENTARIO_COMMIT };

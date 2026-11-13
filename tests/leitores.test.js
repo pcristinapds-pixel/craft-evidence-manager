@@ -101,6 +101,42 @@ test('aceita "CT01 - título" e "Cenário: título" em parágrafos', () => {
   assert.deepEqual(p.map(c => [c.ct, c.titulo]), [['CT01', 'Login válido'], ['CT02', 'Login inválido']]);
 });
 
+test('QMS-1058: "Esquema do Cenário:" com tag @C07 em cima vira CT07, sem misturar cenários', () => {
+  const p = L.lerPlano(paraBlocos(F.QMS_1058));
+  assert.deepEqual(p.map(c => c.ct), ['CT07', 'CT08', 'CT09']);
+  assert.equal(p[0].titulo, 'Validação de Coleta no Brasil para Exportação (Cidade + Estado)');
+  assert.equal(p[0].bdd.split('\n').length, 4);
+  assert.doesNotMatch(p[0].bdd, /@C08|Esquema/);
+  assert.match(p[1].bdd, /^Dado que a cotação possui coleta ativada/);
+  assert.match(p[1].bdd, /Exemplos:\n\| pais \| campos \|\n\| Brasil \| Cidade, Estado \|$/, 'tabela de exemplos fica no cenário');
+  assert.match(p[2].bdd, /HTTP 404\)$/);
+  assert.equal(p[2].tag, '@C09');
+});
+
+test('"Funcionalidade:" e "Exemplos:" não viram cenário; tag na mesma linha também numera', () => {
+  const doc = F.doc(F.p('Feature: Login'), F.p('@CT3 Scenario: Valid login'), F.p('Given a'), F.p('When b'), F.p('Then c'));
+  assert.deepEqual(L.lerPlano(paraBlocos(doc)).map(c => [c.ct, c.titulo]), [['CT03', 'Valid login']]);
+});
+
+test('regravar mantém o formato "Esquema do Cenário:" sem negrito, e o novo ganha a tag @C10', () => {
+  const p = L.lerPlano(paraBlocos(F.QMS_1058));
+  const novo = L.substituirCenario(F.QMS_1058, p[1], { titulo: 'Envio dos sinalizadores (revisado)', bdd: 'Dado a\nQuando b\nEntão c' });
+  const txt = paraTexto(novo);
+  assert.match(txt, /@C08\nEsquema do Cenário: Envio dos sinalizadores \(revisado\)\nDado a\nQuando b\nEntão c\n@C09/);
+  assert.ok(!novo.content.some(n => n.content && n.content.some(c => c.marks)), 'sem negrito, como no original');
+  const mais = L.acrescentarCenario(novo, 10, 'Coleta na Argentina', 'Dado x\nQuando y\nEntão z');
+  assert.match(paraTexto(mais), /HTTP 404\)\n@C10\nEsquema do Cenário: Coleta na Argentina\nDado x/);
+  assert.ok(!mais.content.some(n => n.type === 'rule'), 'não inventa régua onde não tinha');
+  assert.deepEqual(L.lerPlano(paraBlocos(mais)).map(c => c.ct), ['CT07', 'CT08', 'CT09', 'CT10']);
+});
+
+test('tags não viram critério nem passo nos critérios de aceite', () => {
+  const doc = F.doc(F.p('Critérios de aceite:'), F.p('@CA1'), F.p('Cenário: A'), F.p('Dado x'), F.p('Quando y'), F.p('Então z'));
+  const r = L.lerCriterios(paraBlocos(doc));
+  assert.equal(r.total, 1);
+  assert.doesNotMatch(r.grupos[0].criterios[0].bdd, /@CA1/);
+});
+
 test('títulos sem passos BDD não viram cenário', () => {
   assert.equal(L.lerPlano(paraBlocos(F.doc(F.h(2, 'Observações'), F.p('nada aqui')))).length, 0);
 });

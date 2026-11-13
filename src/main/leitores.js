@@ -50,6 +50,7 @@ function lerCriterios(blocos) {
   if (gherkin) {
     let atual = null;
     for (const b of trecho) {
+      if (SO_TAGS.test((b.texto || '').trim())) continue; // tags "@C08" não são passos
       const s = sem(b.texto || '');
       if (b.tipo === 'linha' || !b.texto) { atual = null; continue; }
       if (b.tipo === 'titulo' || TITULO_CENARIO.test(s)) {
@@ -68,7 +69,7 @@ function lerCriterios(blocos) {
   } else {
     for (let k = 0; k < trecho.length; k++) {
       const b = trecho[k];
-      if (b.tipo === 'linha' || b.tipo === 'codigo') continue;
+      if (b.tipo === 'linha' || b.tipo === 'codigo' || SO_TAGS.test((b.texto || '').trim())) continue;
       if (b.tipo === 'item') {
         if (b.nivel === 1 || !ultimo()) add(b.texto);
         else ultimo().subitens.push({ texto: b.texto });
@@ -99,17 +100,30 @@ function lerCriterios(blocos) {
 
 // ---------------------------------------------------------------- plano
 
-// Título de cenário: "1. Validar ...", "CT01 - ...", "Cenário: ..." ou um título (heading)
+// Título de cenário. Aceita:
+//   "1. Validar ..."  ·  "CT01 - ..."  ·  "Cenário: ..."  ·  "Esquema do Cenário: ..."
+//   "Scenario: ..."  ·  "Scenario Outline: ..."  ·  um título (heading) sem palavra de passo
+// Devolve também o "molde" do título, para regravar no mesmo formato.
+const PALAVRA_CENARIO = /^(esquema do cen[aá]rio|delinea[cç][aã]o do cen[aá]rio|cen[aá]rio de exemplo|cen[aá]rio|scenario outline|scenario template|scenario|example)\s*(\d*)\s*:\s*(.+)$/i;
+const SECAO_GHERKIN = /^(funcionalidade|caracter[ií]stica|feature|contexto|background|regra|rule)\s*:/i;
+const SO_TAGS = /^(@[\w.-]+\s*)+$/;
+const numeroDaTag = t => { const m = t.match(/@(?:CT|C|TC|T)?0*(\d+)\b/i); return m ? Number(m[1]) : null; };
+
 function tituloDeCenario(b) {
   if (b.tipo !== 'titulo' && b.tipo !== 'paragrafo') return null;
-  const t = b.texto.trim();
-  let m = t.match(/^CT\s*0*(\d+)\s*[-–—:.)]\s*(.+)$/i);
-  if (m) return { numero: Number(m[1]), titulo: m[2].trim() };
-  m = t.match(/^(\d+)\s*[.)-]\s+(.+)$/);
-  if (m && !PASSO.test(sem(m[2]))) return { numero: Number(m[1]), titulo: m[2].trim() };
-  m = t.match(/^(cen[aá]rio|scenario)\s*(\d*)\s*:\s*(.+)$/i);
-  if (m) return { numero: m[2] ? Number(m[2]) : null, titulo: m[3].trim() };
-  if (b.tipo === 'titulo' && !PASSO.test(sem(t))) return { numero: null, titulo: t };
+  let t = b.texto.trim();
+  // tags na mesma linha do título ("@C08 Esquema do Cenário: ...")
+  const tags = (t.match(/^(@[\w.-]+\s+)+/) || [''])[0];
+  t = t.slice(tags.length).trim();
+  const numTag = tags ? numeroDaTag(tags) : null;
+  const molde = { bloco: b.tipo, nivel: b.nivel || null };
+  let m = t.match(/^CT\s*0*(\d+)\s*([-–—:.)])\s*(.+)$/i);
+  if (m) return { numero: Number(m[1]), titulo: m[3].trim(), molde: { ...molde, estilo: 'ct', sep: m[2] } };
+  m = t.match(/^(\d+)\s*([.)-])\s+(.+)$/);
+  if (m && !PASSO.test(sem(m[3]))) return { numero: Number(m[1]), titulo: m[3].trim(), molde: { ...molde, estilo: 'numero', sep: m[2] } };
+  m = t.match(PALAVRA_CENARIO);
+  if (m) return { numero: m[2] ? Number(m[2]) : numTag, titulo: m[3].trim(), molde: { ...molde, estilo: 'gherkin', palavra: m[1] } };
+  if (b.tipo === 'titulo' && !PASSO.test(sem(t)) && !SECAO_GHERKIN.test(t) && !/^(exemplos|examples)\s*:?$/i.test(t)) return { numero: numTag, titulo: t, molde: { ...molde, estilo: 'titulo' } };
   return null;
 }
 
@@ -117,57 +131,99 @@ function lerPlano(blocos) {
   blocos = blocos || [];
   const cenarios = [];
   let atual = null;
+  let tagPendente = null;   // "@C08" na linha de cima numera o próximo cenário
   const fechar = () => { if (atual && atual.linhas.some(l => PASSO.test(sem(l)))) cenarios.push(atual); atual = null; };
   for (const b of blocos) {
+    const texto = (b.texto || '').trim();
+    if ((b.tipo === 'paragrafo' || b.tipo === 'titulo') && SO_TAGS.test(texto)) {
+      tagPendente = { numero: numeroDaTag(texto), texto, topo: b.topo };
+      continue; // a tag não faz parte do cenário anterior
+    }
+    // "Funcionalidade:", "Contexto:", "Regra:": encerra o cenário anterior e não abre outro
+    if ((b.tipo === 'paragrafo' || b.tipo === 'titulo') && SECAO_GHERKIN.test(texto)) { fechar(); tagPendente = null; continue; }
     const t = tituloDeCenario(b);
-    if (t) { fechar(); atual = { ...t, linhas: [], topoIni: b.topo, topoFim: b.topo }; continue; }
+    if (t) {
+      fechar();
+      const numero = t.numero != null ? t.numero : (tagPendente && tagPendente.numero);
+      atual = { ...t, numero: numero != null ? numero : null, tag: tagPendente ? tagPendente.texto : null, linhas: [], topoIni: b.topo, topoFim: b.topo };
+      tagPendente = null;
+      continue;
+    }
+    tagPendente = null;
     if (!atual) continue;
     if (b.tipo === 'linha') { atual.topoFim = b.topo; fechar(); continue; }
-    if (b.texto) atual.linhas.push(b.texto);
+    if (texto) atual.linhas.push(texto);
     if (b.topo != null) atual.topoFim = b.topo;
   }
   fechar();
   let seq = 0;
+  const usados = new Set();
   return cenarios.map(c => {
-    const numero = c.numero != null ? c.numero : seq + 1;
+    let numero = c.numero != null && !usados.has(c.numero) ? c.numero : seq + 1;
+    while (usados.has(numero)) numero++;
+    usados.add(numero);
     seq = Math.max(seq, numero);
     return {
       numero,
       ct: 'CT' + String(numero).padStart(2, '0'),
       titulo: c.titulo,
       bdd: c.linhas.join('\n'),
+      tag: c.tag,
+      molde: c.molde,
       topoIni: c.topoIni, topoFim: c.topoFim
     };
   });
 }
 
 // Troca, no ADF da sub-task, o trecho de um cenário (do título até antes da régua/próximo título).
-// Mantém o número e o formato: título como heading 2 e palavras-chave em negrito.
+// Mantém o formato do título que já estava lá (número, "CT01 -", "Esquema do Cenário:"...).
 function substituirCenario(adf, cenario, novo) {
   if (!adf || adf.type !== 'doc' || cenario.topoIni == null) throw new Error('Não sei onde está esse cenário na sub-task.');
   const conteudo = adf.content.slice();
   let fim = cenario.topoFim;
   if (conteudo[fim] && conteudo[fim].type === 'rule') fim--; // a régua fica
-  const nos = noDeCenario(cenario.numero, novo.titulo, novo.bdd);
+  const nos = noDeCenario(cenario.numero, novo.titulo, novo.bdd, cenario.molde);
   conteudo.splice(cenario.topoIni, fim - cenario.topoIni + 1, ...nos);
   return { ...adf, content: conteudo };
 }
 
-// Acrescenta um cenário novo no fim da sub-task (com régua antes, se já houver cenários)
+// Acrescenta um cenário novo no fim da sub-task, no mesmo formato dos que já existem
+// (com régua antes, se eles são separados por régua, e com a tag "@C09" se eles usam tags).
 function acrescentarCenario(adf, numero, titulo, bdd) {
   const base = adf && adf.type === 'doc' ? adf : { type: 'doc', version: 1, content: [] };
-  const antes = base.content.length ? [{ type: 'rule' }] : [];
-  return { ...base, content: [...base.content, ...antes, ...noDeCenario(numero, titulo, bdd)] };
+  let molde, tag = null, usaRegua = !base.content.length ? false : true;
+  try {
+    const { paraBlocos } = require('./adf');
+    const existentes = lerPlano(paraBlocos(base));
+    const ult = existentes[existentes.length - 1];
+    if (ult) {
+      molde = ult.molde;
+      usaRegua = base.content.some(n => n.type === 'rule');
+      if (ult.tag) tag = ult.tag.replace(/(@(?:CT|C|TC|T)?)0*\d+/i, (x, pre) => pre + String(numero).padStart((ult.tag.match(/\d+/) || ['00'])[0].length, '0'));
+    }
+  } catch { /* sem cenários: usa o formato padrão */ }
+  const antes = base.content.length && usaRegua ? [{ type: 'rule' }] : [];
+  const nosTag = tag ? [{ type: 'paragraph', content: [{ type: 'text', text: tag }] }] : [];
+  return { ...base, content: [...base.content, ...antes, ...nosTag, ...noDeCenario(numero, titulo, bdd, molde)] };
 }
 
-function noDeCenario(numero, titulo, bdd) {
+function noDeCenario(numero, titulo, bdd, molde) {
+  const m = molde || { bloco: 'titulo', nivel: 2, estilo: 'numero', sep: '.' };
+  const textoTitulo = m.estilo === 'ct' ? `CT${String(numero).padStart(2, '0')} ${m.sep === '-' ? '-' : m.sep} ${titulo}`.replace(/ ([:.)]) /, '$1 ')
+    : m.estilo === 'gherkin' ? `${m.palavra}: ${titulo}`
+    : m.estilo === 'titulo' ? titulo
+    : `${numero}${m.sep || '.'} ${titulo}`;
+  const cabecalho = m.bloco === 'titulo'
+    ? { type: 'heading', attrs: { level: m.nivel || 2 }, content: [{ type: 'text', text: textoTitulo }] }
+    : { type: 'paragraph', content: [{ type: 'text', text: textoTitulo }] };
+  const negrito = m.bloco === 'titulo'; // no formato com título, as palavras-chave vão em negrito
   const linhas = String(bdd || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   return [
-    { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: `${numero}. ${titulo}` }] },
+    cabecalho,
     ...linhas.map(l => {
-      const m = l.match(/^(Dado que|Dado|Dada|Dados|Dadas|Quando|Então|Entao|E|Mas|Given|When|Then|And|But)(\s+)(.*)$/);
-      return { type: 'paragraph', content: m
-        ? [{ type: 'text', text: m[1], marks: [{ type: 'strong' }] }, { type: 'text', text: m[2] + m[3] }]
+      const k = negrito && l.match(/^(Dado que|Dado|Dada|Dados|Dadas|Quando|Então|Entao|E|Mas|Given|When|Then|And|But)(\s+)(.*)$/);
+      return { type: 'paragraph', content: k
+        ? [{ type: 'text', text: k[1], marks: [{ type: 'strong' }] }, { type: 'text', text: k[2] + k[3] }]
         : [{ type: 'text', text: l }] };
     })
   ];
