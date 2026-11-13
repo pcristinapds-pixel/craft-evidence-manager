@@ -36,7 +36,7 @@ function ultimaExecucao(base, storyId, ct) {
   const c = lerCenario(base, storyId, ct);
   if (!c || !c.execucoes || !c.execucoes.length) return null;
   const u = c.execucoes[c.execucoes.length - 1];
-  return { execucao: u.execucao, total: c.execucoes.length, data: u.data, status: u.status, titulo: u.titulo, bdd: u.bdd, tipo: u.tipo, api: u.api ? { curl: u.api.curl } : null };
+  return { execucao: u.execucao, total: c.execucoes.length, data: u.data, status: u.status, titulo: u.titulo, bdd: u.bdd, tipo: u.tipo, natureza: u.natureza || null, criterios: u.criterios || [], api: u.api ? { curl: u.api.curl } : null };
 }
 
 // Dados já salvos da história (título)
@@ -104,6 +104,9 @@ function salvarExecucao(base, d, modo = 'nova') {
     titulo: d.title, bdd: d.bddText,
     responsavel: d.author, ambiente: d.environment, versao: d.version,
     status: d.status, observacao: d.observacao || '',
+    natureza: d.natureza === 'negativo' ? 'negativo' : (d.natureza === 'positivo' ? 'positivo' : null),
+    criterios: Array.isArray(d.criterios) ? d.criterios : [],
+    origem: d.origem || null,
     api, evidencias
   });
   gravarJson(arqCen, cen);
@@ -136,4 +139,122 @@ function listarCenarios(base, storyId) {
     .sort((a, b) => a.pasta.localeCompare(b.pasta, 'pt-BR', { numeric: true }));
 }
 
-module.exports = { infoHistoria, pastaHistoria, pastaCenario, lerCenario, ultimaExecucao, salvarExecucao, listarCenarios, lerJson, seguro, versaoRelatorio };
+// ------------------------------------------------------------------
+// Dados do Jira e do plano, guardados em historia.json:
+//   jira       { projeto, tipo, status, campoDescricao, lidoEm, atualizadoEm }
+//   criterios  { leitura (de lerCriterios), assinatura, mudou, confirmados, ajustes }
+//   plano      { subtarefa, lidoEm, cenarios: [{ ct, numero, titulo, bdd, origem, topoIni, topoFim }] }
+//   regras     [{ titulo, texto, autor, data, comentarioId }]
+//   cobertura  { CT01: ['CA3', 'CA7'] }
+//   natureza   { CT01: 'positivo' }
+// O que a pessoa ajustou (cobertura, ajustes dos critérios, cenários editados no app)
+// nunca é sobrescrito por uma nova leitura do Jira.
+// ------------------------------------------------------------------
+function lerHistoria(base, storyId) {
+  return lerJson(path.join(pastaHistoria(base, storyId), 'historia.json'), { id: storyId });
+}
+function gravarHistoria(base, storyId, h) {
+  gravarJson(path.join(pastaHistoria(base, storyId), 'historia.json'), h);
+  return h;
+}
+const assinaturaCriterios = leitura => JSON.stringify(((leitura && leitura.grupos) || []).map(g => [g.nome, g.criterios.map(c => [c.texto, c.subitens.map(x => x.texto)])]));
+
+// Grava o que veio do Jira. Devolve a história atualizada.
+function salvarDadosJira(base, storyId, { titulo, jira, criterios, plano, regras } = {}) {
+  const h = lerHistoria(base, storyId);
+  h.id = storyId;
+  if (titulo) h.titulo = titulo;
+  if (jira) h.jira = { ...(h.jira || {}), ...jira, lidoEm: new Date().toISOString() };
+  if (criterios) {
+    const assinatura = assinaturaCriterios(criterios);
+    const antes = h.criterios || {};
+    h.criterios = {
+      ...antes,
+      leitura: criterios,
+      assinatura,
+      // critérios mudaram no Jira depois da conferência: a tela avisa antes de usar
+      mudou: !!(antes.confirmados && antes.assinatura && antes.assinatura !== assinatura),
+      ajustes: antes.ajustes || {}
+    };
+  }
+  if (plano) {
+    const locais = ((h.plano && h.plano.cenarios) || []).filter(c => c.origem && c.origem !== 'plano' && !c.gravadoNoJira);
+    const anteriores = new Map(((h.plano && h.plano.cenarios) || []).map(c => [c.ct, c]));
+    const doJira = plano.cenarios.map(c => {
+      const ant = anteriores.get(c.ct);
+      const novo = { ...c, origem: 'plano' };
+      if (!ant) return novo;
+      const mudouNoJira = ant.lidoDoJira && (ant.lidoDoJira.titulo !== c.titulo || ant.lidoDoJira.bdd !== c.bdd);
+      novo.lidoDoJira = { titulo: c.titulo, bdd: c.bdd };
+      // edição local ainda não gravada no Jira: fica a do app, e a do Jira vai junto para comparar
+      if (ant.editadoEm && !ant.gravadoNoJira) {
+        return { ...novo, titulo: ant.titulo, bdd: ant.bdd, editadoEm: ant.editadoEm, ...(mudouNoJira ? { conflito: true } : {}) };
+      }
+      return mudouNoJira ? { ...novo, mudouNoJira: true } : novo;
+    }).map(c => (c.lidoDoJira ? c : { ...c, lidoDoJira: { titulo: c.titulo, bdd: c.bdd } }));
+    const cts = new Set(doJira.map(c => c.ct));
+    h.plano = { subtarefa: plano.subtarefa, lidoEm: new Date().toISOString(), atualizadoEm: plano.atualizadoEm || null, cenarios: [...doJira, ...locais.filter(c => !cts.has(c.ct))] };
+  }
+  if (regras) h.regras = regras;
+  h.cobertura = h.cobertura || {};
+  h.natureza = h.natureza || {};
+  return gravarHistoria(base, storyId, h);
+}
+
+// Conferência dos critérios: { subitens, ignorados, naoSeAplica }
+function salvarAjustesCriterios(base, storyId, ajustes) {
+  const h = lerHistoria(base, storyId);
+  h.criterios = { ...(h.criterios || {}), ajustes: ajustes || {}, confirmados: true, mudou: false };
+  return gravarHistoria(base, storyId, h);
+}
+
+function definirCobertura(base, storyId, ct, ids) {
+  const h = lerHistoria(base, storyId);
+  h.cobertura = { ...(h.cobertura || {}), [ct]: [...new Set(ids || [])] };
+  return gravarHistoria(base, storyId, h);
+}
+
+function definirNatureza(base, storyId, ct, natureza) {
+  const h = lerHistoria(base, storyId);
+  h.natureza = { ...(h.natureza || {}), [ct]: natureza === 'negativo' ? 'negativo' : 'positivo' };
+  return gravarHistoria(base, storyId, h);
+}
+
+// Cenário editado no app: atualiza o plano local e TODAS as execuções já feitas desse CT
+// (decisão do time: o relatório mostra sempre o texto atual do cenário).
+function atualizarCenario(base, storyId, ct, { titulo, bdd, gravadoNoJira = false }) {
+  const h = lerHistoria(base, storyId);
+  const cenarios = (h.plano && h.plano.cenarios) || [];
+  const c = cenarios.find(x => x.ct === ct);
+  if (c) {
+    if (titulo != null) c.titulo = titulo;
+    if (bdd != null) c.bdd = bdd;
+    c.editadoEm = new Date().toISOString();
+    c.gravadoNoJira = !!gravadoNoJira;
+    delete c.conflito; delete c.mudouNoJira;
+    if (gravadoNoJira) c.lidoDoJira = { titulo: c.titulo, bdd: c.bdd };
+  }
+  gravarHistoria(base, storyId, h);
+  const arq = path.join(pastaCenario(base, storyId, ct), 'cenario.json');
+  const cen = lerJson(arq, null);
+  if (cen && cen.execucoes) {
+    cen.execucoes.forEach(ex => { if (titulo != null) ex.titulo = titulo; if (bdd != null) ex.bdd = bdd; });
+    gravarJson(arq, cen);
+  }
+  return h;
+}
+
+// Cenário novo criado no app (para um critério descoberto ou uma regra de comentário)
+function adicionarCenario(base, storyId, { titulo, bdd, origem = 'app', origemDetalhe = '', criterios = [] }) {
+  const h = lerHistoria(base, storyId);
+  h.plano = h.plano || { subtarefa: null, cenarios: [] };
+  const usados = h.plano.cenarios.map(c => c.numero || Number(String(c.ct).replace(/\D/g, '')) || 0);
+  const numero = (usados.length ? Math.max(...usados) : 0) + 1;
+  const ct = 'CT' + String(numero).padStart(2, '0');
+  h.plano.cenarios.push({ ct, numero, titulo, bdd, origem, origemDetalhe, criadoEm: new Date().toISOString() });
+  if (criterios.length) h.cobertura = { ...(h.cobertura || {}), [ct]: criterios };
+  gravarHistoria(base, storyId, h);
+  return { ct, numero, historia: h };
+}
+
+module.exports = { lerHistoria, salvarDadosJira, salvarAjustesCriterios, definirCobertura, definirNatureza, atualizarCenario, adicionarCenario, infoHistoria, pastaHistoria, pastaCenario, lerCenario, ultimaExecucao, salvarExecucao, listarCenarios, lerJson, seguro, versaoRelatorio };

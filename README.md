@@ -14,6 +14,7 @@
 - **adf**: conversão do texto do Jira (listas, subitens, citações de issue, réguas)
 - **jira**: cliente do Jira Cloud (token recusado, campos personalizados pelo nome, minhas sub-tasks)
 - **leitores**: critérios de aceite (lista, grupos, subitens, Gherkin, texto corrido), cenários da sub-task [QA], regras nos comentários
+- **plano-cobertura**: cobertura dos critérios, positivo/negativo, edição de cenário (vale também para as execuções anteriores), conflito com o Jira
 - **credenciais**: token de API guardado criptografado, nunca devolvido para a tela
 - **video-tools**: padronizar, compactar e editar vídeo (usa o FFmpeg; pulados se ele não estiver instalado)
 
