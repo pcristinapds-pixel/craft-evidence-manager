@@ -14,12 +14,86 @@
       </div>
       <h2>Craft QA <span>Evidence Manager</span></h2>
     </div>
+    <div class="header-dir">
+    <button id="jiraSelo" class="jira-selo hidden" type="button"></button>
     <button id="btnSettings" class="btn-secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Configurações</button>
+    </div>
+  </div>
+
+  <!-- Tela inicial: sub-tasks abertas no meu nome -->
+  <div id="screenMinhas" class="container hidden">
+    <div id="minhasAviso" class="aviso-erro hidden" role="alert"></div>
+    <div class="minhas-topo">
+      <div>
+        <h1 class="titulo-tela">Minhas sub-tasks abertas</h1>
+        <span id="minhasInfo" class="opcional"></span>
+      </div>
+      <div class="minhas-busca">
+        <input type="text" id="buscaOutra" placeholder="Outra história, ex.: POR-6925" aria-label="Buscar outra história">
+        <button id="btnBuscaOutra" class="btn-secondary">Buscar</button>
+      </div>
+    </div>
+    <div class="card filtros-minhas">
+      <input type="search" id="filtroMinhas" placeholder="Filtrar por chave ou título" aria-label="Filtrar por chave ou título">
+      <select id="filtroProjeto" aria-label="Projeto"><option value="">Todos os projetos</option></select>
+      <label class="check"><input type="checkbox" id="filtroQa" checked> Só sub-tasks [QA]</label>
+      <button id="btnAtualizarMinhas" class="btn-secondary btn-small">Atualizar</button>
+    </div>
+    <div class="card lista-minhas" id="listaMinhas"></div>
+    <div id="semJira" class="card hidden">
+      <h3>Conecte o Jira</h3>
+      <p>Com o Jira conectado, o app traz as suas sub-tasks, o plano de testes e os critérios de aceite de cada história.</p>
+      <div class="actions" style="justify-content:flex-start">
+        <button id="btnConectarJira" class="btn-primary">Conectar o Jira</button>
+        <button id="btnSemJira" class="btn-secondary">Evidenciar sem Jira</button>
+      </div>
+    </div>
+    <p class="opcional">Sub-tasks atribuídas a você e não concluídas no Jira. Ao abrir uma, o app carrega a história mãe, os critérios de aceite e o plano da sub-task [QA].</p>
+  </div>
+
+  <!-- Conferência dos critérios de aceite -->
+  <div id="screenConferir" class="container hidden">
+    <div class="conferir-layout">
+      <div class="card conferir-main">
+        <span id="confHistoria" class="opcional"></span>
+        <h3>Conferir critérios de aceite</h3>
+        <p id="confResumo"></p>
+        <div id="confLista"></div>
+        <div class="actions acoes-rodape">
+          <span class="acoes-esq"><button id="btnConfVoltar" class="btn-secondary">← Voltar</button>
+          <span class="opcional">Em cada critério: marcar "não se aplica" ou ignorar.</span></span>
+          <button id="btnConfReler" class="btn-secondary">Ler de novo do Jira</button>
+          <button id="btnConfConfirmar" class="btn-primary">Confirmar critérios</button>
+        </div>
+      </div>
+      <aside class="conferir-lado">
+        <div class="card"><h4>De onde li</h4><div id="confOrigem"></div></div>
+        <div class="card regras hidden" id="confRegras"></div>
+        <div class="card"><h4>Plano de testes</h4><div id="confPlano"></div></div>
+      </aside>
+    </div>
   </div>
 
   <div id="screenSetup" class="container">
+   <div class="setup-layout">
+    <aside id="asideJira" class="aside-jira hidden">
+      <div class="card">
+        <div class="aside-cab"><h4>Plano de testes</h4><span id="planoInfo" class="opcional"></span></div>
+        <div id="planoOrigem" class="opcional"></div>
+        <div class="barra"><div id="planoBarra"></div></div>
+        <div id="planoLista" class="plano-lista"></div>
+      </div>
+      <div class="card">
+        <div class="aside-cab"><h4>Critérios de aceite</h4><span id="critInfo" class="opcional"></span></div>
+        <div id="critOrigem" class="opcional"></div>
+        <div id="critLista"></div>
+      </div>
+      <div class="card regras hidden" id="asideRegras"></div>
+    </aside>
+    <div class="setup-main">
     <div class="card">
       <h3>Informações do Caso de Teste</h3>
+      <div id="resumoHistoria" class="resumo-historia hidden"></div>
       <div class="tipo-teste">
         <label>Tipo de teste</label>
         <div class="seg" id="tipoTeste" role="group" aria-label="Tipo de teste">
@@ -30,7 +104,10 @@
       <div class="form-grid">
         <div class="form-group">
           <label>ID da História *</label>
-          <input type="text" id="storyId" placeholder="Ex: QMS-1036">
+          <div class="campo-com-botao">
+            <input type="text" id="storyId" placeholder="Ex: QMS-1036">
+            <button type="button" id="btnBuscarJira" class="btn-navy">Buscar no Jira</button>
+          </div>
         </div>
         <div class="form-group">
           <label>Caso de Teste *</label>
@@ -65,6 +142,24 @@
         <div class="form-group span-full">
           <label>Cenário de Teste (BDD) *</label>
           <textarea id="bddText" rows="5" placeholder="Dado que... (ou Given)&#10;Quando... (ou When)&#10;Então... (ou Then)"></textarea>
+          <div id="barraEdicao" class="barra-edicao hidden">
+            <label class="check"><input type="checkbox" id="gravarNoJira" checked> <span id="gravarNoJiraTxt">Atualizar também no Jira</span> · execuções anteriores passam a usar o texto novo</label>
+            <span><button type="button" id="btnDesfazerCenario" class="btn-small">Desfazer</button>
+            <button type="button" id="btnSalvarCenario" class="btn-small btn-navy">Salvar cenário</button></span>
+          </div>
+          <div id="avisoConflito" class="aviso-erro hidden"></div>
+        </div>
+        <div class="form-group span-full linha-natureza">
+          <span class="rotulo">Cenário *</span>
+          <div class="seg" id="natureza" role="group" aria-label="Cenário positivo ou negativo">
+            <button type="button" data-v="positivo" class="ativo">Positivo</button>
+            <button type="button" data-v="negativo">Negativo</button>
+          </div>
+          <span id="naturezaDica" class="opcional">Sugerido a partir do BDD, clique para alterar</span>
+        </div>
+        <div class="form-group span-full hidden" id="grupoCobre">
+          <span class="rotulo">Cobre os critérios de aceite <span class="opcional">· sugerido pelo app, guardado só no app</span></span>
+          <div id="chipsCobre" class="chips"></div>
         </div>
       </div>
     </div>
@@ -89,11 +184,14 @@
       <div id="sourcesList" class="sources-grid"></div>
     </div>
 
-    <div class="actions">
+    <div class="actions acoes-rodape">
+      <span class="acoes-esq"><button id="btnSetupVoltar" class="btn-secondary hidden">← Voltar</button></span>
       <button id="btnIrRevisao" class="btn-secondary hidden">Voltar para a revisão</button>
       <button id="btnReviewNoCapture" class="btn-secondary hidden">Revisar sem prints</button>
       <button id="btnStartCapture" class="btn-primary">Iniciar captura</button>
     </div>
+    </div>
+   </div>
   </div>
 
   <div id="screenReview" class="container hidden">
@@ -193,6 +291,42 @@
   <div id="modalSettings" class="modal hidden">
     <div class="modal-content">
       <h3>Configurações do Sistema</h3>
+      <section class="cfg-jira">
+        <h4>Conexão com o Jira</h4>
+        <div id="cfgJiraAviso" class="aviso-erro hidden" role="alert"></div>
+        <div class="form-group">
+          <label for="cfgJiraSite">Endereço do Jira</label>
+          <input type="text" id="cfgJiraSite" placeholder="https://suaempresa.atlassian.net">
+        </div>
+        <div class="form-group">
+          <label for="cfgJiraEmail">Seu e-mail do Jira</label>
+          <input type="email" id="cfgJiraEmail" placeholder="nome@empresa.com.br">
+        </div>
+        <div class="form-group">
+          <label for="cfgJiraToken">Token de API <button type="button" id="btnAjudaToken" class="ajuda" aria-label="Como gerar o token de API" aria-expanded="false">?</button></label>
+          <input type="password" id="cfgJiraToken" autocomplete="off">
+          <span id="cfgTokenDica" class="dica-campo">Fica guardado criptografado neste computador e nunca vai para relatórios.</span>
+        </div>
+        <div id="ajudaToken" class="ajuda-box hidden">
+          <b>Como gerar o token de API</b>
+          <ol>
+            <li>Abra a página de tokens da sua conta Atlassian (<a href="#" id="linkTokens">Conta Atlassian › Segurança › Tokens de API</a>), com o mesmo e-mail do Jira.</li>
+            <li>Clique em <b>Criar token de API</b>.</li>
+            <li>Dê um nome, como <b>Craft Evidence Manager</b>, e escolha a validade (no máximo 1 ano).</li>
+            <li>Clique em <b>Criar</b> e copie o token. Ele só aparece uma vez.</li>
+            <li>Cole no campo <b>Token de API</b> e clique em <b>Testar conexão</b>.</li>
+          </ol>
+          <p class="opcional">O token é pessoal: dá ao app o mesmo acesso que você tem no Jira. Não compartilhe.</p>
+        </div>
+        <div class="form-group">
+          <label for="cfgJiraPrefixo">Onde está o plano de testes</label>
+          <div class="campo-com-texto">Sub-task com <input type="text" id="cfgJiraPrefixo" value="[QA]" style="width:90px"> no título (a que tiver os cenários)</div>
+        </div>
+        <div class="linha-teste">
+          <span id="cfgJiraStatus" class="opcional"></span>
+          <button type="button" id="btnTestarJira" class="btn-secondary btn-small">Testar conexão</button>
+        </div>
+      </section>
       <div class="form-group">
         <label>Pasta das Evidências (relatórios e PPTs)</label>
         <div class="folder-input">
@@ -201,8 +335,9 @@
         </div>
       </div>
       <div class="form-group">
-        <label>URL Base das Histórias (JIRA/Azure)</label>
+        <label>URL Base das Histórias (links do relatório)</label>
         <input type="text" id="cfgJiraUrl" placeholder="https://suaempresa.atlassian.net/browse/">
+        <span class="dica-campo">Preenchida a partir do endereço do Jira, quando ele estiver configurado.</span>
       </div>
       <div class="form-group">
         <label>Atalho do Print</label>
@@ -231,7 +366,27 @@
     </div>
   </div>
 
+  <div id="modalCenario" class="modal hidden">
+    <div class="modal-content modal-largo" role="dialog" aria-labelledby="mcTitulo">
+      <h3 id="mcTitulo">Novo cenário</h3>
+      <p id="mcOrigem" class="opcional"></p>
+      <div id="mcReferencia" class="referencia hidden"></div>
+      <div class="form-group"><label for="mcNome">Título do cenário *</label><input type="text" id="mcNome"></div>
+      <div class="form-group"><label for="mcBdd">Cenário (BDD) *</label><textarea id="mcBdd" rows="5" class="mono">Given &#10;When &#10;Then </textarea></div>
+      <div class="linha-natureza"><span class="rotulo">Cenário *</span>
+        <div class="seg" id="mcNatureza" role="group" aria-label="Cenário positivo ou negativo">
+          <button type="button" data-v="positivo" class="ativo">Positivo</button><button type="button" data-v="negativo">Negativo</button>
+        </div></div>
+      <label class="check" id="mcGravarLinha"><input type="checkbox" id="mcGravar" checked> <span id="mcGravarTxt">Gravar também na sub-task do plano no Jira</span></label>
+      <div class="modal-actions">
+        <button id="mcAdicionar" class="btn-primary">Adicionar ao plano</button>
+        <button id="mcCancelar" class="btn-secondary">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <script src="bdd.js"></script>
   <script src="app.js"></script>
+  <script src="jira-ui.js"></script>
 </body>
 </html>

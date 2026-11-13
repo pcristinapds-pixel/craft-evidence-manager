@@ -20,6 +20,21 @@ contextBridge.exposeInMainWorld('api', {
   openPath: (p) => ipcRenderer.invoke('open-path', p),
   showItem: (p) => ipcRenderer.invoke('show-item', p),
   videoAvailable: () => ipcRenderer.invoke('video-available'),
+
+  // Jira
+  jiraConfig: () => ipcRenderer.invoke('jira-config'),
+  jiraConfigSalvar: (cfg) => ipcRenderer.invoke('jira-config-salvar', cfg),
+  jiraTestar: () => ipcRenderer.invoke('jira-testar'),
+  jiraMinhas: (opcoes) => ipcRenderer.invoke('jira-minhas', opcoes),
+  jiraHistoria: (chave) => ipcRenderer.invoke('jira-historia', chave),
+  jiraEscolherPlano: (storyId, subtarefa) => ipcRenderer.invoke('jira-escolher-plano', { storyId, subtarefa }),
+  historiaLocal: (storyId) => ipcRenderer.invoke('historia-local', storyId),
+  criteriosAjustes: (storyId, ajustes) => ipcRenderer.invoke('criterios-ajustes', { storyId, ajustes }),
+  coberturaDefinir: (storyId, ct, ids) => ipcRenderer.invoke('cobertura-definir', { storyId, ct, ids }),
+  naturezaDefinir: (storyId, ct, natureza) => ipcRenderer.invoke('natureza-definir', { storyId, ct, natureza }),
+  cenarioSalvar: (dados) => ipcRenderer.invoke('cenario-salvar', dados),
+  cenarioNovo: (dados) => ipcRenderer.invoke('cenario-novo', dados),
+  abrirLink: (url) => ipcRenderer.invoke('abrir-link', url),
   
   // Comandos enviados pela barra flutuante
   sendPrintCmd: () => ipcRenderer.send('cmd-print'),

@@ -43,11 +43,16 @@ function sugerirCriterios(cenario, criterios, { limite = 0.3 } = {}) {
   lista.forEach(c => c.pk.forEach(p => df.set(p, (df.get(p) || 0) + 1)));
   const peso = p => Math.log((lista.length + 1) / ((df.get(p) || 0) + 0.5));
   const distintiva = Math.log((lista.length + 1) / 2.5); // palavra presente em até 2 critérios
-  return lista.map(c => {
+  const notas = lista.map(c => {
     let total = 0, comum = 0, temDistintiva = false;
     c.pk.forEach(p => { const w = peso(p); total += w; if (pc.has(p)) { comum += w; if (w >= distintiva) temDistintiva = true; } });
     return { id: c.id, nota: total ? comum / total : 0, temDistintiva };
-  }).filter(n => n.temDistintiva && n.nota >= limite).sort((a, b) => b.nota - a.nota).map(n => n.id);
+  }).filter(n => n.temDistintiva);
+  // na dúvida, melhor deixar de sugerir do que inflar a cobertura: além do mínimo,
+  // o critério precisa chegar perto do mais parecido com o cenário
+  const melhor = Math.max(0, ...notas.map(n => n.nota));
+  const corte = Math.max(limite, 0.4 * melhor);
+  return notas.filter(n => n.nota >= corte).sort((a, b) => b.nota - a.nota).map(n => n.id);
 }
 
 // ---- positivo ou negativo, sugerido pelo BDD (a pessoa confirma)

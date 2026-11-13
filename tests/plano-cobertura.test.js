@@ -43,6 +43,14 @@ test('sugere os critérios do idioma certo para cada cenário', () => {
   assert.ok(!s3.includes('CA10'), 'gatilho de envio não aparece no cenário');
 });
 
+test('cenário genérico não infla a cobertura com critérios de outro assunto', () => {
+  const crit = C.criteriosEfetivos(leituraPOR());
+  const ct01 = lerPlano(paraBlocos(F.POR_7132))[0];
+  const s = C.sugerirCriterios(ct01, crit);
+  assert.ok(s.includes('CA3') && s.includes('CA7'));
+  ['CA1', 'CA2', 'CA10', 'CA11'].forEach(id => assert.ok(!s.includes(id), `${id} não deveria ser sugerido para o CT01: ${s}`));
+});
+
 test('sem palavras em comum, não sugere nada', () => {
   assert.deepEqual(C.sugerirCriterios({ titulo: 'Login', bdd: 'Dado x\nQuando y\nEntão z' }, C.criteriosEfetivos(leituraPOR())), []);
 });

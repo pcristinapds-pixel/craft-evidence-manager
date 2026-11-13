@@ -193,7 +193,7 @@ function salvarDadosJira(base, storyId, { titulo, jira, criterios, plano, regras
       return mudouNoJira ? { ...novo, mudouNoJira: true } : novo;
     }).map(c => (c.lidoDoJira ? c : { ...c, lidoDoJira: { titulo: c.titulo, bdd: c.bdd } }));
     const cts = new Set(doJira.map(c => c.ct));
-    h.plano = { subtarefa: plano.subtarefa, lidoEm: new Date().toISOString(), atualizadoEm: plano.atualizadoEm || null, cenarios: [...doJira, ...locais.filter(c => !cts.has(c.ct))] };
+    h.plano = { subtarefa: plano.subtarefa, ...(h.plano && h.plano.subtarefaEscolhida ? { subtarefaEscolhida: h.plano.subtarefaEscolhida } : {}), lidoEm: new Date().toISOString(), atualizadoEm: plano.atualizadoEm || null, cenarios: [...doJira, ...locais.filter(c => !cts.has(c.ct))] };
   }
   if (regras) h.regras = regras;
   h.cobertura = h.cobertura || {};
@@ -257,4 +257,4 @@ function adicionarCenario(base, storyId, { titulo, bdd, origem = 'app', origemDe
   return { ct, numero, historia: h };
 }
 
-module.exports = { lerHistoria, salvarDadosJira, salvarAjustesCriterios, definirCobertura, definirNatureza, atualizarCenario, adicionarCenario, infoHistoria, pastaHistoria, pastaCenario, lerCenario, ultimaExecucao, salvarExecucao, listarCenarios, lerJson, seguro, versaoRelatorio };
+module.exports = { lerHistoria, gravarHistoria, salvarDadosJira, salvarAjustesCriterios, definirCobertura, definirNatureza, atualizarCenario, adicionarCenario, infoHistoria, pastaHistoria, pastaCenario, lerCenario, ultimaExecucao, salvarExecucao, listarCenarios, lerJson, seguro, versaoRelatorio };

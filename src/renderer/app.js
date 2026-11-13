@@ -220,6 +220,7 @@ async function carregarExistente() {
   if (!info) {
     ['testTitle', 'bddText', 'apiCurl'].forEach(id => { if (auto[id] && val(id) === auto[id]) preencher(id, ''); });
     box.classList.add('hidden');
+    if (typeof jiraAposCarregar === 'function') jiraAposCarregar(story, ct, null); // preenche pelo plano do Jira
     return;
   }
   if (info.tipo) definirTipo(info.tipo);
@@ -229,6 +230,7 @@ async function carregarExistente() {
   box.textContent = `Já evidenciado · ${info.status} · ${info.data}` + (info.total > 1 ? ` · ${info.total} execuções` : '');
   box.title = 'Título e BDD preenchidos com a última execução deste cenário';
   box.classList.remove('hidden');
+  if (typeof jiraAposCarregar === 'function') jiraAposCarregar(story, ct, info);
 }
 let espera;
 ['storyId', 'testCaseId'].forEach(id => {
@@ -648,12 +650,15 @@ document.getElementById('btnGeneratePPT').addEventListener('click', async () => 
     api: tipoTeste === 'back' ? { curl: document.getElementById('apiCurl').value, collectionPath } : null,
     evidences: evidences.map(e => e.type === 'image'
       ? { type: 'image', dataUrl: e.dataUrl, width: e.width, height: e.height, legenda: e.legenda || '' }
-      : { type: 'video', filePath: e.filePath, cover: e.cover, width: e.width, height: e.height, duration: e.duration, legenda: e.legenda || '' })
+      : { type: 'video', filePath: e.filePath, cover: e.cover, width: e.width, height: e.height, duration: e.duration, legenda: e.legenda || '' }),
+    // positivo/negativo, critérios cobertos e origem do cenário (jira-ui.js)
+    ...(typeof jiraDadosExecucao === 'function' ? jiraDadosExecucao() : {})
   };
 
   const res = await window.api.generateEvidence(dados, modoExecucao, saidas);
   btn.disabled = false; btn.textContent = 'Gerar evidência';
   if (!res.success) return window.api.showError('Erro ao gerar', 'Ocorreu um erro ao gerar a evidência: ' + res.error);
+  if (typeof jiraAposGerar === 'function') await jiraAposGerar(res, dados);
 
   const botoes = [];
   if (res.relatorio) botoes.push('Abrir relatório');
@@ -673,8 +678,11 @@ document.getElementById('btnGeneratePPT').addEventListener('click', async () => 
   if (acao === 'Abrir pasta') window.api.openPath(res.pasta);
 
   // Próximo cenário: mantém história, ambiente e tipo; avança o CT
+  // (com plano do Jira, vai para o próximo CT ainda não executado)
+  const proximo = typeof jiraProximoCt === 'function' ? jiraProximoCt(dados.testCaseId) : null;
   const ctMatch = val('testCaseId').match(/\d+/);
-  if (ctMatch) document.getElementById('testCaseId').value = val('testCaseId').replace(/\d+/, String(parseInt(ctMatch[0]) + 1).padStart(ctMatch[0].length, '0'));
+  if (proximo) document.getElementById('testCaseId').value = proximo;
+  else if (ctMatch) document.getElementById('testCaseId').value = val('testCaseId').replace(/\d+/, String(parseInt(ctMatch[0]) + 1).padStart(ctMatch[0].length, '0'));
   ['bddText', 'testTitle', 'apiCurl', 'observacao'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('finalStatus').value = '';
   atualizarObservacao();
@@ -699,10 +707,12 @@ document.getElementById('btnSettings').addEventListener('click', async () => {
   document.getElementById('cfgShortcutFinish').value = cfg.shortcutFinish.replace(/CommandOrControl/gi, 'Ctrl');
   document.getElementById('cfgShortcutPause').value = (cfg.shortcutPause || 'CommandOrControl+Shift+P').replace(/CommandOrControl/gi, 'Ctrl');
   document.getElementById('cfgDrawCursor').checked = cfg.drawCursor;
+  if (typeof jiraAbrirConfig === 'function') await jiraAbrirConfig();
   document.getElementById('modalSettings').classList.remove('hidden');
 });
 
 document.getElementById('btnSaveSettings').addEventListener('click', async () => {
+  if (typeof jiraSalvarConfig === 'function' && !(await jiraSalvarConfig())) return;
   await window.api.saveSettings({
     jiraUrl: document.getElementById('cfgJiraUrl').value,
     shortcutPrint: document.getElementById('cfgShortcutPrint').value,

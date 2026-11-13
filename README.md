@@ -15,11 +15,20 @@
 - **jira**: cliente do Jira Cloud (token recusado, campos personalizados pelo nome, minhas sub-tasks)
 - **leitores**: critérios de aceite (lista, grupos, subitens, Gherkin, texto corrido), cenários da sub-task [QA], regras nos comentários
 - **plano-cobertura**: cobertura dos critérios, positivo/negativo, edição de cenário (vale também para as execuções anteriores), conflito com o Jira
+- **jira-servico**: carregar história com Jira simulado, escolher a sub-task do plano, gravar cenário no Jira e conflito, visão com status e falhas antes do sucesso
 - **credenciais**: token de API guardado criptografado, nunca devolvido para a tela
 - **video-tools**: padronizar, compactar e editar vídeo (usa o FFmpeg; pulados se ele não estiver instalado)
 
 ## Testar só o PPT
 `npm run test:ppt` gera um PPT de exemplo na pasta `exemplo-saida/` (com print ultrawide, print 16:9 e vídeo).
+
+## Integração com o Jira
+1. Em **Configurações › Conexão com o Jira**, informe o endereço (ex.: `https://suaempresa.atlassian.net`), seu e-mail e um token de API pessoal (o **?** ao lado do campo explica como gerar). Clique em **Testar conexão**.
+2. A tela inicial passa a mostrar **Minhas sub-tasks abertas** ([QA] atribuídas a você). Abrir uma carrega a história mãe, os critérios de aceite e o plano.
+3. O plano é lido da sub-task com **[QA]** no título que tiver os cenários (o prefixo pode ser trocado nas configurações).
+4. Quando os critérios têm subitens, leitura incerta ou mudaram no Jira, o app abre a **conferência** antes.
+5. Editar o título ou o BDD de um CT mostra **Salvar cenário**: grava no app (e nas execuções anteriores) e, se marcado, também na sub-task do Jira. Se o cenário mudou no Jira ao mesmo tempo, o app mostra as duas versões.
+6. Sem token válido, o app avisa ("Token expirado · Corrigir") e continua funcionando com os dados já lidos.
 
 ## Atalhos durante a evidência
 - **F9**: tirar print

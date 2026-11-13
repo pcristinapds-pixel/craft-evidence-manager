@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, desktopCapturer, shell, dialog, screen, nativeImage } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, desktopCapturer, shell, dialog, screen, nativeImage, safeStorage } = require('electron');
 const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
@@ -8,6 +8,10 @@ const { generatePPTX } = require('./ppt-builder');
 const video = require('./video-tools');
 const evidencias = require('./evidence-store');
 const { gerarRelatorio, gerarRelatorioBug, ehBug, nomeBug } = require('./report-builder');
+const { criarCliente, normalizarSite } = require('./jira');
+const { criarServico } = require('./jira-servico');
+const credenciais = require('./credenciais');
+const { montarVisao } = require('./visao');
 
 const store = new Store();
 
@@ -377,4 +381,98 @@ ipcMain.handle('generate-pptx', async (event, data) => {
     console.error(error);
     return { success: false, error: error.message };
   }
+});
+
+// ---------------- Integração com o Jira ----------------
+const prefixoPlano = () => store.get('jiraPrefixoPlano') || '[QA]';
+function clienteJira() {
+  return criarCliente({ site: store.get('jiraSite'), email: store.get('jiraEmail'), token: credenciais.lerToken(store, safeStorage) });
+}
+const servicoJira = () => criarServico({ cliente: clienteJira(), base: pastaEvidencias(), prefixo: prefixoPlano() });
+// Respostas para a tela: { ok, dados } ou { ok: false, erro, tipo } (tipo "token" = token recusado)
+async function responder(fn) {
+  try { return { ok: true, dados: await fn() }; }
+  catch (e) { console.error(e); return { ok: false, erro: e.message, tipo: e.tipo || 'erro' }; }
+}
+
+ipcMain.handle('jira-config', () => credenciais.configJira(store, safeStorage));
+
+ipcMain.handle('jira-config-salvar', (event, { site, email, token, prefixo }) => responder(() => {
+  const s = normalizarSite(site);
+  store.set('jiraSite', s);
+  store.set('jiraEmail', String(email || '').trim());
+  store.set('jiraPrefixoPlano', String(prefixo || '').trim() || '[QA]');
+  if (token) credenciais.salvarToken(store, safeStorage, token); // vazio = mantém o token guardado
+  if (s) store.set('jiraUrl', s + '/browse/');                  // links do relatório
+  return credenciais.configJira(store, safeStorage);
+}));
+
+ipcMain.handle('jira-testar', () => responder(() => clienteJira().eu()));
+
+// Sub-tasks abertas no meu nome, com o andamento do plano de cada história
+ipcMain.handle('jira-minhas', (event, { soQa = true } = {}) => responder(async () => {
+  try {
+    const lista = await clienteJira().minhasSubtarefas({ prefixo: soQa ? prefixoPlano() : '' });
+    const base = pastaEvidencias();
+    const comAndamento = lista.map(s => {
+      if (!s.pai) return s;
+      const v = montarVisao(base, s.pai.chave);
+      return { ...s, andamento: { executados: v.executados, total: v.cenarios.length, falharam: v.cenarios.filter(c => c.status === 'Falhou').length } };
+    });
+    store.set('jiraMinhasCache', { lista: comAndamento, lidoEm: new Date().toISOString(), soQa });
+    return { lista: comAndamento, lidoEm: new Date().toISOString() };
+  } catch (e) {
+    // token recusado ou sem internet: mostra a última lista lida
+    const cache = store.get('jiraMinhasCache');
+    if (cache && (e.tipo === 'token' || e.tipo === 'rede')) return { lista: cache.lista, lidoEm: cache.lidoEm, doCache: true, erro: e.message, tipo: e.tipo };
+    throw e;
+  }
+}));
+
+ipcMain.handle('jira-historia', (event, chave) => responder(() => servicoJira().carregarHistoria(chave)));
+ipcMain.handle('jira-escolher-plano', (event, { storyId, subtarefa }) => responder(() => servicoJira().escolherPlano(storyId, subtarefa)));
+ipcMain.handle('historia-local', (event, storyId) => responder(() => montarVisao(pastaEvidencias(), storyId)));
+
+ipcMain.handle('criterios-ajustes', (event, { storyId, ajustes }) => responder(() => {
+  evidencias.salvarAjustesCriterios(pastaEvidencias(), storyId, ajustes);
+  return montarVisao(pastaEvidencias(), storyId);
+}));
+ipcMain.handle('cobertura-definir', (event, { storyId, ct, ids }) => responder(() => {
+  evidencias.definirCobertura(pastaEvidencias(), storyId, ct, ids);
+  return montarVisao(pastaEvidencias(), storyId);
+}));
+ipcMain.handle('natureza-definir', (event, { storyId, ct, natureza }) => responder(() => {
+  evidencias.definirNatureza(pastaEvidencias(), storyId, ct, natureza);
+  return montarVisao(pastaEvidencias(), storyId);
+}));
+
+// Edição de um cenário: no app e, se pedido, também na sub-task do plano no Jira
+ipcMain.handle('cenario-salvar', (event, { storyId, ct, titulo, bdd, gravarNoJira }) => responder(async () => {
+  const base = pastaEvidencias();
+  let jira = null;
+  if (gravarNoJira) {
+    jira = await servicoJira().gravarCenarioNoJira(storyId, ct, { titulo, bdd });
+    if (jira.conflito) return { conflito: true, noJira: jira.noJira, visao: montarVisao(base, storyId) };
+  } else {
+    evidencias.atualizarCenario(base, storyId, ct, { titulo, bdd });
+  }
+  return { jira, visao: montarVisao(base, storyId) };
+}));
+
+// Cenário novo (para um critério sem cenário ou uma regra dos comentários)
+ipcMain.handle('cenario-novo', (event, { storyId, titulo, bdd, natureza, criterios, origem, origemDetalhe, gravarNoJira }) => responder(async () => {
+  const base = pastaEvidencias();
+  const { ct } = evidencias.adicionarCenario(base, storyId, { titulo, bdd, origem, origemDetalhe, criterios });
+  if (natureza) evidencias.definirNatureza(base, storyId, ct, natureza);
+  let jira = null;
+  if (gravarNoJira) jira = await servicoJira().gravarCenarioNoJira(storyId, ct, { titulo, bdd });
+  return { ct, jira, visao: montarVisao(base, storyId) };
+}));
+
+// Abre no navegador só links do Jira configurado e a página de tokens da Atlassian
+ipcMain.handle('abrir-link', (event, url) => {
+  const site = store.get('jiraSite');
+  const ok = /^https:\/\/id\.atlassian\.com\//.test(url) || (site && String(url).startsWith(site + '/'));
+  if (ok) shell.openExternal(url);
+  return ok;
 });
