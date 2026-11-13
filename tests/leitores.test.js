@@ -137,6 +137,28 @@ test('tags não viram critério nem passo nos critérios de aceite', () => {
   assert.doesNotMatch(r.grupos[0].criterios[0].bdd, /@CA1/);
 });
 
+test('pular linha e começar outro Dado depois do Então vira outro cenário', () => {
+  const doc = F.doc(F.h(2, '1. Login'), F.p('Dado x'), F.p('Quando y'), F.p('Então z'), F.p(''),
+    F.p('Dado que o usuário está bloqueado'), F.p('Quando tenta entrar'), F.p('Então vê o aviso'));
+  const p = L.lerPlano(paraBlocos(doc));
+  assert.deepEqual(p.map(c => [c.ct, c.titulo, c.bdd.split('\n').length]), [['CT01', 'Login', 3], ['CT02', 'O usuário está bloqueado', 3]]);
+  assert.equal(p[1].semTitulo, true);
+});
+
+test('plano só com passos, sem nenhum título, também é lido', () => {
+  const doc = F.doc(F.p('Given a valid user'), F.p('When logging in'), F.p('Then the home opens'), F.p('Given a blocked user'), F.p('When logging in'), F.p('Then an alert shows'));
+  const p = L.lerPlano(paraBlocos(doc));
+  assert.deepEqual(p.map(c => c.titulo), ['A valid user', 'A blocked user']);
+  // regravar um cenário sem título não cria título
+  const novo = L.substituirCenario(doc, p[1], { titulo: 'x', bdd: 'Given a blocked user\nWhen logging in\nThen an alert shows\nAnd nothing else' });
+  assert.equal(paraTexto(novo), 'Given a valid user\nWhen logging in\nThen the home opens\nGiven a blocked user\nWhen logging in\nThen an alert shows\nAnd nothing else');
+});
+
+test('"E" e "Mas" depois do Então continuam no mesmo cenário', () => {
+  const doc = F.doc(F.p('Cenário: A'), F.p('Dado x'), F.p('Quando y'), F.p('Então z'), F.p('E w'), F.p('Mas v'));
+  assert.equal(L.lerPlano(paraBlocos(doc))[0].bdd.split('\n').length, 5);
+});
+
 test('títulos sem passos BDD não viram cenário', () => {
   assert.equal(L.lerPlano(paraBlocos(F.doc(F.h(2, 'Observações'), F.p('nada aqui')))).length, 0);
 });

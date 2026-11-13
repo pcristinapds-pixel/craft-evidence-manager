@@ -149,6 +149,15 @@ function lerPlano(blocos) {
       tagPendente = null;
       continue;
     }
+    // cenário sem título: um "Dado/Given" que começa do zero, ou que vem depois de um "Então/Then"
+    // (pular linha e escrever outro Dado = outro cenário)
+    const s0 = sem(texto);
+    if (b.tipo !== 'linha' && INICIO_PASSO.test(s0) && (!atual || atual.linhas.some(l => /^(entao|then)\b/.test(sem(l))))) {
+      fechar();
+      const resumo = texto.replace(/^\S+\s+(que\s+)?/i, '');
+      atual = { numero: tagPendente ? tagPendente.numero : null, titulo: maiusc(resumo.length > 70 ? resumo.slice(0, 67).trimEnd() + '…' : resumo), semTitulo: true,
+        tag: tagPendente ? tagPendente.texto : null, molde: { bloco: 'paragrafo', estilo: 'sem-titulo' }, linhas: [], topoIni: b.topo, topoFim: b.topo };
+    }
     tagPendente = null;
     if (!atual) continue;
     if (b.tipo === 'linha') { atual.topoFim = b.topo; fechar(); continue; }
@@ -167,6 +176,7 @@ function lerPlano(blocos) {
       numero,
       ct: 'CT' + String(numero).padStart(2, '0'),
       titulo: c.titulo,
+      semTitulo: !!c.semTitulo,
       bdd: c.linhas.join('\n'),
       tag: c.tag,
       molde: c.molde,
@@ -207,6 +217,8 @@ function acrescentarCenario(adf, numero, titulo, bdd) {
   return { ...base, content: [...base.content, ...antes, ...nosTag, ...noDeCenario(numero, titulo, bdd, molde)] };
 }
 
+const maiusc = t => t ? t[0].toUpperCase() + t.slice(1) : t;
+
 function noDeCenario(numero, titulo, bdd, molde) {
   const m = molde || { bloco: 'titulo', nivel: 2, estilo: 'numero', sep: '.' };
   const textoTitulo = m.estilo === 'ct' ? `CT${String(numero).padStart(2, '0')} ${m.sep === '-' ? '-' : m.sep} ${titulo}`.replace(/ ([:.)]) /, '$1 ')
@@ -219,7 +231,7 @@ function noDeCenario(numero, titulo, bdd, molde) {
   const negrito = m.bloco === 'titulo'; // no formato com título, as palavras-chave vão em negrito
   const linhas = String(bdd || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   return [
-    cabecalho,
+    ...(m.estilo === 'sem-titulo' ? [] : [cabecalho]), // plano sem títulos: continua sem título
     ...linhas.map(l => {
       const k = negrito && l.match(/^(Dado que|Dado|Dada|Dados|Dadas|Quando|Então|Entao|E|Mas|Given|When|Then|And|But)(\s+)(.*)$/);
       return { type: 'paragraph', content: k
